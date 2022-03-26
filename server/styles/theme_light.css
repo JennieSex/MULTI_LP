@@ -1,0 +1,16 @@
+:root {
+    --navbar-menu-opened: #55b936;
+}
+
+html {
+    transition: all 1s ease-in-out;
+}
+
+.header {
+    background-color: #8eecaf !important;
+    transition: all 1s ease-in-out;
+}
+
+.themedtext {
+    transition: all 1s ease-in-out;
+}
