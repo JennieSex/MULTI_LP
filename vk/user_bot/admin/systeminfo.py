@@ -17,6 +17,7 @@ from .admin import check_admin
 @dlp.register('системинфо', 'хост', receive=True)
 @dlp.wrap_handler(check_admin)
 def check_system(nd: ND):
+    nd.msg_op(2, "⌛Вычисляю данные...")
     my_system = platform.uname()
     totalsize = psutil.disk_usage('/').total / (2 ** 30)
     freesize = psutil.disk_usage('/').free / (2 ** 30)
@@ -28,6 +29,4 @@ def check_system(nd: ND):
     📗 Загрузка ОЗУ: {psutil.virtual_memory()[2]}%
     💽 Диск: {round(freesize, 1)}/{round(totalsize, 1)} GB
     '''
-    nd.msg_op(2, "⌛Вычисляю данные...")
-    time.sleep(2)
     nd.msg_op(2, f'{inspect.cleandoc(text)}')
