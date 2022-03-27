@@ -6,7 +6,7 @@ from . import dlp, ND
 
 
 @dlp.register('вики', receive=True)
-def to_private(nd: ND):
+def wiki(nd: ND):
     try:
         text = nd.msg['args'][0]
         wikipedia.set_lang("RU")
