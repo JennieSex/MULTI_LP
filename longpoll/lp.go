@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/SevereCloud/vksdk/v2/api"
 	"io/ioutil"
 	"log"
+	"lp/pkg/logging"
 	"net"
 	"net/http"
 	"net/url"
@@ -53,10 +55,10 @@ type vkResp struct {
 	Error    map[string]interface{} `json:"error"`
 }
 
-type message struct {
+/*type message struct {
 	Out int `json:"out"`
 	ID  int `json:"id"`
-}
+}*/
 
 type vkGSResp struct {
 	Response getServerResponse `json:"response"`
@@ -148,6 +150,10 @@ var allMentRegular *regexp.Regexp
 
 // --- th2empty ---
 
+var (
+	logger = logging.GetLogger()
+)
+
 func main() {
 	ddRegular = regexp.MustCompile(`\d+`)
 	ddEditRegular = regexp.MustCompile(`-( ?\d+)?(.+)?`)
@@ -163,41 +169,43 @@ func main() {
 	<-die
 }
 
-// --- th2empty ---
+// SavePathogen
+//--- th2empty ---
 func SavePathogen(message string) {
 	log.Printf("Source message: %s", message)
 	var (
-		rexBlock    = regexp.MustCompile(`🦠 \[([^)]+)\] подверг заражению патогеном «([^)]+)»`)
-		rexAuthor   = regexp.MustCompile(`\[([^)]+)\]`)
+		rexBlock    = regexp.MustCompile(`🦠 \[([^)]+)] подверг заражению патогеном «([^)]+)»`)
+		rexAuthor   = regexp.MustCompile(`\[([^)]+)]`)
 		rexPathogen = regexp.MustCompile(`«([^)]+)»`)
 	)
 
 	if len(rexBlock.FindString(message)) == 0 {
-		rexBlock = regexp.MustCompile(`🦠 \[([^)]+)\] подвергла заражению патогеном «([^)]+)»`)
+		rexBlock = regexp.MustCompile(`🦠 \[([^)]+)] подвергла заражению патогеном «([^)]+)»`)
 	}
 
-	var block string = rexBlock.FindString(message)
+	var block = rexBlock.FindString(message)
 	if len(block) == 0 {
-		log.Printf("Infection not found in message")
 		return
 	}
 
-	log.Printf("Infection found in message, parsing data...")
-	authorID, _ := strconv.Atoi(strings.Replace(strings.Replace(strings.Split(rexAuthor.FindString(block), "|")[0], "id", "", -1), "[", "", -1))
+	authorID, _ := strconv.Atoi(
+		strings.Replace(
+			strings.Replace(
+				strings.Split(rexAuthor.FindString(block), "|")[0],
+				"id", "", -1), "[", "", -1),
+	)
 	authorName := strings.Replace(strings.Split(rexAuthor.FindString(block), "|")[1], "]", "", -1)
 
 	pathogen := rexPathogen.FindString(block)
 	pathogen = strings.Replace(pathogen, "«", "", -1)
 	pathogen = strings.Replace(pathogen, "»", "", -1)
 
-	var p models.Pathogen = models.Pathogen{
+	var p = models.Pathogen{
 		Name:       pathogen,
 		AuthorID:   authorID,
 		AuthorName: authorName,
 		UpdateDate: time.Now().Unix(),
 	}
-
-	log.Printf("Parsed data:\n\nName: %s\nAuthorID:%d\nAuthorName: %s\nUpdateDate: %d", p.Name, p.AuthorID, p.AuthorName, p.UpdateDate)
 
 	var ex, _ = os.Executable()
 	var exPath = filepath.Dir(ex)
@@ -218,10 +226,15 @@ func SavePathogen(message string) {
 	connData := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s", config.Username, config.Password, config.Database)
 	db, err := sql.Open("mysql", connData)
 	if err != nil {
-		log.Printf("\033[31m [ERROR]: %s", err.Error())
+		logger.Error(err)
 	}
 
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			logger.Error(err)
+		}
+	}(db)
 
 	query := fmt.Sprintf(`INSERT INTO pathogens(name, author_id, author_name, upd_date) values('%s', %d, '%s', %d)
 						ON DUPLICATE KEY UPDATE name = VALUES(name), author_id = VALUES(author_id), author_name = VALUES(author_name)`,
@@ -229,11 +242,9 @@ func SavePathogen(message string) {
 
 	_, err = db.Exec(query)
 	if err != nil {
-		log.Printf("\033[31m [ERROR]: %s", err.Error())
+		logger.Error(err)
 		return
 	}
-
-	log.Printf("Saved to database")
 }
 
 // --- th2empty end ---
@@ -350,7 +361,7 @@ func sendErr(typ string, uid int) {
 	unixSend(data)
 }
 
-func send(uid int, update update, token string) (success bool) {
+func send(uid int, update update) (success bool) {
 	defer func() {
 		if err := recover(); err != nil {
 			success = false
@@ -373,6 +384,7 @@ func troublesNotify(update update, token string, text string) {
 	vkMethod(token, "messages.edit", query.Encode())
 }
 
+// GetForbiddenWords
 // --- th2empty ---
 func GetForbiddenWords(uid int) (ForbiddenWords, error) {
 	var ex, _ = os.Executable()
@@ -393,14 +405,14 @@ func GetForbiddenWords(uid int) (ForbiddenWords, error) {
 	connData := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s", config.Username, config.Password, config.Database)
 	db, err := sql.Open("mysql", connData)
 	if err != nil {
-		log.Printf("ERR::SQL::Open: %s", err.Error())
+		logger.Error(err)
 	}
 
 	defer db.Close()
 
 	rows, err := db.Query(fmt.Sprintf("select uid, words from forbidden_words where uid=%d", uid))
 	if err != nil {
-		log.Printf("ERR::SQL::DB::Query: %s", err.Error())
+		logger.Error(err)
 	}
 
 	defer rows.Close()
@@ -489,13 +501,9 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 
 			// --- th2empty ---
 			{
-				message, err := controller.GetMessageByID(token, int(update.ID))
-				log.Printf("Err is %s", err)
-				if err == nil {
-					log.Printf("Message from id%d", message.FromID)
-				}
+				vk := api.NewVK(token)
+				message, err := controller.GetMessageByID(vk, int(update.ID))
 				if err == nil && message.FromID < 0 {
-					log.Printf("Calling 'SavePathogen'")
 					SavePathogen(message.Text)
 				}
 			}
@@ -517,18 +525,18 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 				update.Text = strings.ToLower(update.Text)
 
 				// --- th2empty ---
-				err := controller.IdentifyCommand(token, update.Text, update.PeerID, int(update.ID))
+				err := controller.ExecuteCommand(&logger, token, update.Text, update.PeerID, int(update.ID), uid)
 				if err != nil {
-					log.Printf("\033[31m [ERROR]: %s", err.Error())
+					logger.Error(err)
 				}
-				// --- th2empty
+				// --- th2empty ---
 
 				if strings.HasPrefix(update.Text, "!!") {
 					update.Type = 444
-					send(uid, update, token)
+					send(uid, update)
 				} else if strings.HasPrefix(update.Text, "нд") {
 					update.Type = 555
-					if !send(uid, update, token) {
+					if !send(uid, update) {
 						troublesNotify(update, token, settingsInfoGet())
 					}
 				} else if strings.HasPrefix(update.Text, delEditor) {
@@ -541,10 +549,10 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 					pp(update, token)
 				} else if strings.HasPrefix(update.Text, prefix) {
 					update.Text = strings.Replace(update.Text, prefix, "", 1)
-					if !send(uid, update, token) {
+					if !send(uid, update) {
 						troublesNotify(update, token,
 							"⚠ Приемник сигналов работает в аварийном режиме "+
-								"(автор где-то накосячил, напиши [id83759702|ему])")
+								"(модмейкер где-то накосячил, напиши своему [id83759702|хозяину])")
 					}
 				}
 			} else {

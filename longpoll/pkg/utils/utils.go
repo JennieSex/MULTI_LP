@@ -3,6 +3,10 @@
 
 package utils
 
+import (
+	"strings"
+)
+
 func HasString(str string, list []string) bool {
 	for _, v := range list {
 		if str == v {
@@ -11,4 +15,13 @@ func HasString(str string, list []string) bool {
 	}
 
 	return false
+}
+
+func RemoveTrashFromTarget(target string) string {
+	var symbols = []string{"https://www.vk.com/", "vk.com/", "https://"}
+	for _, v := range symbols {
+		target = strings.Replace(target, v, "", -1)
+	}
+
+	return target
 }

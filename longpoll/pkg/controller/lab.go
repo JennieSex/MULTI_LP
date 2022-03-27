@@ -6,6 +6,7 @@ package controller
 import (
 	"errors"
 	"fmt"
+	"lp/pkg/logging"
 	"regexp"
 	"strings"
 	"time"
@@ -31,11 +32,14 @@ func ParseLab(token string, peerId int) (models.Laboratory, error) {
 		return models.Laboratory{}, errors.New("history empty")
 	}
 
-	vk.MessagesMarkAsRead(api.Params{
+	_, _ = vk.MessagesMarkAsRead(api.Params{
 		"peer_id": -174105461,
 	})
+	if err != nil {
+		return models.Laboratory{}, err
+	}
 
-	var labMessage string = messagesHistory[len(messagesHistory)-1].Text
+	var labMessage = messagesHistory[len(messagesHistory)-1].Text
 	var infectionName string
 
 	if strings.Contains(labMessage, "болезнью") {
@@ -51,8 +55,8 @@ func ParseLab(token string, peerId int) (models.Laboratory, error) {
 		rexNewPathogen = regexp.MustCompile(`Новый патоген: (([^)]+)\n\n)`)
 		newPathogen    = rexNewPathogen.FindString(labMessage)
 
-		rexExpirence = regexp.MustCompile(`Био-опыт: ([^)]+)`)
-		expirence    = rexExpirence.FindString(labMessage)
+		rexExperience = regexp.MustCompile(`Био-опыт: ([^)]+)`)
+		experience    = rexExperience.FindString(labMessage)
 
 		rexResources = regexp.MustCompile(`Био-ресурс: ([^)]+)😷`)
 		resources    = rexResources.FindString(labMessage)
@@ -61,7 +65,7 @@ func ParseLab(token string, peerId int) (models.Laboratory, error) {
 		health    = rexHealth.FindString(labMessage)
 	)
 
-	if len(pathogens) == 0 || len(expirence) == 0 {
+	if len(pathogens) == 0 || len(experience) == 0 {
 		return models.Laboratory{Pathogens: "NULL"}, nil
 	}
 
@@ -74,18 +78,32 @@ func ParseLab(token string, peerId int) (models.Laboratory, error) {
 	} else {
 		newPathogen = "⏱ " + strings.Replace(newPathogen, "Новый патоген:", "Появление следующей торпеды:", -1)
 	}
+
 	return models.Laboratory{
 		Pathogens:          strings.Replace(pathogens, "🧪 Готовых патогенов", "🤠 Торпед в наличии", -1),
 		NewPathogen:        newPathogen,
-		Expirence:          "☣ " + strings.Replace(expirence, "Био-опыт:", "Опыт:", -1),
+		Expirence:          "☣ " + strings.Replace(experience, "Био-опыт:", "Опыт:", -1),
 		ResourcesAvailable: "💫 " + strings.Replace(resources, "😷", "", -1),
 		Health:             health,
 	}, nil
-
-	//return models.Laboratory{}, nil
 }
 
-func GetLab(token string, mid int, pid int) {
+func deleteMessages(vk *api.VK, msg int, logger *logging.Logger) error {
+	for m := msg; m < m+1; m++ {
+		_, err := vk.MessagesDelete(api.Params{
+			"peer_id":    -174105461,
+			"message_id": m,
+		})
+		if err != nil {
+			logger.Error(err)
+			return err
+		}
+	}
+
+	return nil
+}
+
+func GetLab(token string, logger *logging.Logger) string {
 	vk := api.NewVK(token)
 
 	msg, err := vk.MessagesSend(api.Params{
@@ -95,8 +113,8 @@ func GetLab(token string, mid int, pid int) {
 	})
 
 	if err != nil {
-		EditMsg(token, fmt.Sprintf("⚠ Произошла ошибка, а текст ее звучит так:\n %s", err.Error()), mid, pid)
-		return
+		//EditMsg(token, fmt.Sprintf("⚠ Произошла ошибка, а текст ее звучит так:\n %s", err.Error()), mid, pid)
+		return fmt.Sprintf("⚠ Произошла ошибка, а текст ее звучит так:\n %s", err.Error())
 	}
 
 	var res models.Laboratory
@@ -114,19 +132,15 @@ func GetLab(token string, mid int, pid int) {
 	}
 
 	if strings.Contains(res.Pathogens, "NULL") {
-		vk.MessagesDelete(api.Params{
-			"peer_id":    -174105461,
-			"message_id": msg + 1,
-		})
-		vk.MessagesDelete(api.Params{
-			"peer_id":    -174105461,
-			"message_id": msg,
-		})
-		EditMsg(token, "⚠ Сообщение от ириса не найдено", mid, pid)
-		return
+		err = deleteMessages(vk, msg, logger)
+		if err != nil {
+			logger.Error(err)
+		}
+
+		return "⚠ Сообщение от ириса не найдено"
 	}
 
-	var info string = "" +
+	var info = "" +
 		res.Pathogens + "\n" +
 		strings.ReplaceAll(res.NewPathogen, "\n", "") + "\n" +
 		strings.Split(res.Expirence, "\n")[0] + "\n" +
@@ -136,14 +150,10 @@ func GetLab(token string, mid int, pid int) {
 		info += "\n\n" + res.Health
 	}
 
-	vk.MessagesDelete(api.Params{
-		"peer_id":    -174105461,
-		"message_id": msg + 1,
-	})
-	vk.MessagesDelete(api.Params{
-		"peer_id":    -174105461,
-		"message_id": msg,
-	})
-
-	EditMsg(token, info, mid, pid)
+	err = deleteMessages(vk, msg, logger)
+	if err != nil {
+		logger.Error(err)
+	}
+	
+	return info
 }

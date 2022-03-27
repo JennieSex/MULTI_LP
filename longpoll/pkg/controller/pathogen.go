@@ -6,8 +6,9 @@ package controller
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/SevereCloud/vksdk/v2/api"
 	"io/ioutil"
-	"log"
+	"lp/pkg/logging"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -30,29 +31,26 @@ type DBConfig struct {
 	Database string `json:"database"`
 }
 
-func FindAuthoOfPathogen(token string, pid, mid int) {
-	var rexPathogen *regexp.Regexp = regexp.MustCompile(`«([^)]+)»`)
+func FindAuthorOfPathogen(logger *logging.Logger, vk *api.VK, mid, ownerId int) string {
+	var rexPathogen = regexp.MustCompile(`«([^)]+)»`)
 
 	var pat string
-	message, err := GetMessageByID(token, mid)
+	message, err := GetMessageByID(vk, mid)
 	if err != nil {
-		log.Printf("\033[31m [ERROR]: config file is filled incorrectly")
-		EditMsg(token, fmt.Sprintf("❗ Произошла следующая ошибка: %s", err.Error()), mid, pid)
-		return
+		logger.Error(err)
+		return "❗ Произошла следующая ошибка: %s\", err.Error()"
 	}
 
 	if len(strings.Split(message.Text, " ")) == 1 {
 		if message.ReplyMessage == nil {
-			EditMsg(token, "🤡 А что искать?", mid, pid)
-			return
+			return "🤡 А что искать?"
 		}
 		fwdText := message.ReplyMessage.Text
 		pat = rexPathogen.FindString(fwdText)
 		pat = strings.Replace(pat, "«", "", -1)
 		pat = strings.Replace(pat, "»", "", -1)
 		if len(pat) == 0 {
-			EditMsg(token, "🤡 А что искать?", mid, pid)
-			return
+			return "🤡 А что искать?"
 		}
 	} else {
 		cmdPrefix := strings.Split(message.Text, " ")[0] + " "
@@ -71,14 +69,14 @@ func FindAuthoOfPathogen(token string, pid, mid int) {
 
 	err = json.Unmarshal(fData, &config)
 	if err != nil {
-		log.Printf("\033[31m [ERROR]: config file is filled incorrectly")
-		return
+		logger.Fatal("config file is filled incorrectly")
+		return "[FATAL ERROR]: config file is filled incorrectly"
 	}
 
 	connData := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s", config.Username, config.Password, config.Database)
 	db, err := sql.Open("mysql", connData)
 	if err != nil {
-		log.Printf("\033[31m [ERROR]: %s", err.Error())
+		logger.Fatal(err)
 	}
 
 	defer db.Close()
@@ -87,7 +85,7 @@ func FindAuthoOfPathogen(token string, pid, mid int) {
 
 	rows, err := db.Query(query)
 	if err != nil {
-		log.Printf("\033[31m [ERROR]: %s", err.Error())
+		logger.Error(err)
 	}
 
 	defer rows.Close()
@@ -100,14 +98,15 @@ func FindAuthoOfPathogen(token string, pid, mid int) {
 	}
 
 	if len(objs) == 0 {
-		EditMsg(token, fmt.Sprintf("🔍 Не удалось найти ни единого упоминания болезни «%s»", pat), mid, pid)
-		return
+		return fmt.Sprintf("🔍 Не удалось найти ни единого упоминания болезни «%s»", pat)
 	}
 
-	info := fmt.Sprintf("💩 Патоген: «%s»\n🐓 Гигант мыслей: [id%d|%s]\n💾 Обновлен: %s",
+	info := fmt.Sprintf("💩 Патоген: «%s»\n🐓 Гигант мыслей: [id%d|%s]\n💾 Обновлен: %s\n\n",
 		pathogen.Name, pathogen.AuthorID, pathogen.AuthorName,
 		time.Unix(pathogen.UpdateDate, 0).Format("02.01.2006"))
 
-	EditMsg(token, info, mid, pid)
-	return
+	infections := FindInfections(logger, vk, mid, ownerId, pathogen.AuthorID)
+	info += infections
+
+	return info
 }

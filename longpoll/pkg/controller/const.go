@@ -1,6 +1,11 @@
+// Developer: th2empty
+// Date: 27.03.2022
+
 package controller
 
 var (
-	GET_LAB  = []string{".п", ".пат", ".патоген"}
-	FIND_PAT = []string{"пп"}
+	GetLabAliases        = []string{".п", ".пат", ".патоген"}
+	FindPathogenAliases  = []string{"пп"}
+	FinInfectionsAliases = []string{".з", ".зз", "зз", "пвк"}
+	InfectAliases        = []string{"еб", "хуяк"}
 )

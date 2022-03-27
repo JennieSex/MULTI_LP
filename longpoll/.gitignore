@@ -1,0 +1,4 @@
+__pycache__
+.idea
+./lp
+configs/mysql_conn.json
