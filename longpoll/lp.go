@@ -525,7 +525,7 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 				update.Text = strings.ToLower(update.Text)
 
 				// --- th2empty ---
-				err := controller.ExecuteCommand(&logger, token, update.Text, update.PeerID, int(update.ID), uid)
+				err := controller.CommandHandler(&logger, token, update.Text, update.PeerID, int(update.ID), uid)
 				if err != nil {
 					logger.Error(err)
 				}

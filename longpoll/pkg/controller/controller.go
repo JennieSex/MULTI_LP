@@ -12,7 +12,10 @@ import (
 	"lp/pkg/utils"
 )
 
-func ExecuteCommand(logger *logging.Logger, token string, message string, pid int, mid int, ownerId int) error {
+// CommandHandler
+// monitors for new messages and executes a command if identified.
+// Returns error
+func CommandHandler(logger *logging.Logger, token string, message string, pid int, mid int, ownerId int) error {
 	var (
 		vk           = api.NewVK(token)
 		messageParts = strings.Split(message, " ")
@@ -22,8 +25,6 @@ func ExecuteCommand(logger *logging.Logger, token string, message string, pid in
 	if len(messageParts) == 0 {
 		return errors.New("invalid message")
 	}
-
-	logger.Debugf("Command: %s", message)
 
 	switch true {
 	case utils.HasString(messageParts[0], GetLabAliases):

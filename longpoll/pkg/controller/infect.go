@@ -18,6 +18,8 @@ var (
 	infectEnabled = false
 )
 
+// InfectUsers
+// infects a user or users by their id
 func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 	var message, err = GetMessageByID(vk, mid)
 	if err != nil {
@@ -32,16 +34,42 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 	)
 
 	if len(msgParts) < 2 {
+		if message.ReplyMessage.FromID < 0 {
+			logger.Infof("@id%d attempt to infect a group club%d", message.FromID, message.ReplyMessage.FromID)
+			return "", errors.New("attempt to infect a group")
+		}
+
+		if message.FromID == message.ReplyMessage.FromID {
+			logger.Infof("@id%d tried to infect himself", message.FromID)
+			EditMsg(vk,
+				"🔪 Нож видишь? Пока он в моей руке. Но ещё один такой рофл и будет он уже в тебе.",
+				mid, message.PeerID)
+			return "", nil
+		}
+
+		err := SendMessage(vk, message.PeerID,
+			fmt.Sprintf("Заразить [id%d|бомжа]", message.ReplyMessage.FromID), message.ReplyMessage.ID)
+		if err != nil {
+			logger.Error(err)
+			return "", err
+		}
+
+		return "", nil
+	} else if strings.EqualFold(msgParts[1], "всех") {
 		linkNum = -1
 	} else {
 		if strings.EqualFold(msgParts[1], "стоп") {
 			infectEnabled = false
+			EditMsg(vk, "👻 Остановка остановлена", message.ID, message.PeerID)
 		} else {
 			linkNum, err = strconv.Atoi(msgParts[1])
 			if err != nil {
-				EditMsg(vk, "⚠ Писать надо так: еб <номер ссылки>! А номер ссылки - целое число", mid, message.PeerID)
-				return "",
-					errors.New("invalid link number")
+				err = SendMessage(vk, message.PeerID,
+					fmt.Sprintf("Заразить %s", msgParts[1]), 0)
+				if err != nil {
+					logger.Error(err)
+					return "", err
+				}
 			}
 		}
 	}
@@ -60,28 +88,48 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 		logger.Debug(ids)
 		for _, id := range ids {
 			if !infectEnabled {
-				EditMsg(vk, "👻 Остановка остановлена", message.ID, message.PeerID)
 				return "", err
+			}
+
+			if id == fmt.Sprintf("id%d", message.FromID) {
+				logger.Infof("@%s started mass infection and [ids] contains him id; skipping iteration", id)
+				continue
 			}
 
 			err := SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
 			if err != nil {
 				logger.Warn(err)
 				time.Sleep(5 * time.Second)
-				SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
+				err := SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
+				if err != nil {
+					logger.Warn(err)
+					return "", err
+				}
 			}
 			time.Sleep(10 * time.Second)
 		}
 
-		SendMessage(vk, message.PeerID, "👻 Бомжи - всё.", 0)
+		err := SendMessage(vk, message.PeerID, "👻 Бомжи - всё.", 0)
+		if err != nil {
+			logger.Warn(err)
+			return "", err
+		}
 		return "", nil
 	} else {
 		if len(ids) < linkNum {
-			EditMsg(vk, "⚠ Произошла ошибка и виноват по любому вк", mid, message.PeerID)
+			EditMsg(vk, "⚠ Где-то ты в жизни не туда свернул...", mid, message.PeerID)
 			return "", errors.New("invalid ids")
 		}
 
-		SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", ids[linkNum-1]), 0)
+		if linkNum <= 0 {
+			return "", nil
+		}
+
+		err := SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", ids[linkNum-1]), 0)
+		if err != nil {
+			logger.Warn(err)
+			return "", err
+		}
 		infectEnabled = false
 	}
 
