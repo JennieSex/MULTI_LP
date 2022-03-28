@@ -1,4 +1,4 @@
-from database.data_classes import AccountTG
+#from database.data_classes import AccountTG
 import re
 from time import time as timenow
 from typing import Any, Tuple, Dict

@@ -5,8 +5,10 @@ package controller
 
 import (
 	"errors"
+	"fmt"
 	"github.com/SevereCloud/vksdk/v2/api"
 	"lp/pkg/logging"
+	"lp/pkg/models"
 	"strings"
 
 	"lp/pkg/utils"
@@ -15,8 +17,12 @@ import (
 // CommandHandler
 // monitors for new messages and executes a command if identified.
 // Returns error
-func CommandHandler(logger *logging.Logger, token string, message string, pid int, mid int, ownerId int) error {
+func CommandHandler(logger *logging.Logger, token string, s *map[string]models.Settings, message string, pid int, mid int, ownerId int) error {
 	var (
+		_key      = fmt.Sprintf("id%d", ownerId)
+		_settings = *s
+		_         = _settings[_key]
+
 		vk           = api.NewVK(token)
 		messageParts = strings.Split(message, " ")
 		answer       string

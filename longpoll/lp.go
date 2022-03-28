@@ -33,13 +33,6 @@ type ForbiddenWords struct {
 	Words string
 }
 
-type DBConfig struct {
-	Host     string `json:"host"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Database string `json:"database"`
-}
-
 // --- th2empty end ---
 
 type getServerResponse struct {
@@ -150,9 +143,15 @@ var allMentRegular *regexp.Regexp
 
 // --- th2empty ---
 
+//type Settings models.Settings
+
 var (
-	logger = logging.GetLogger()
+	logger        = logging.GetLogger()
+	settings      = map[string]models.Settings{}
+	answerMachine = map[string]controller.AnswerMachine{}
 )
+
+// --- th2empty end ---
 
 func main() {
 	ddRegular = regexp.MustCompile(`\d+`)
@@ -164,15 +163,60 @@ func main() {
 	addrUNIX = filepath.Join(addrUNIX, "catcher.sock")
 	die := make(chan bool)
 
+	// --- th2empty ---
+	if err := makePreparations(); err != nil {
+		logger.Error(err) // dangerous error, but LP can work
+	}
+	// --- th2empty and ---
+
 	go mainListen(die)
 	go counter()
 	<-die
 }
 
-// SavePathogen
 //--- th2empty ---
+
+func makePreparations() error {
+	var ex, _ = os.Executable()
+	var exPath = filepath.Dir(ex)
+	var config models.DBConfig
+	var f = exPath + "/configs/mysql_conn.json"
+	fData, err := ioutil.ReadFile(f)
+	if err != nil {
+		logger.Fatal(err) // fatal error, LP can't work
+	}
+
+	err = json.Unmarshal(fData, &config)
+	if err != nil {
+		logger.Fatal("config file filled incorrectly") // fatal error, LP can't work
+	}
+
+	connData := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s", config.Username, config.Password, config.Database)
+	db, err := sql.Open("mysql", connData)
+	if err != nil {
+		logger.Error(err) // critical error, but LP can work without some commands
+	}
+
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			logger.Error(err)
+		}
+	}(db)
+
+	query := fmt.Sprintf(`CREATE TABLE IF NOT EXISTS settings(
+									uid int not null primary key, answering_machine bool not null, auto_vac bool not null)`)
+
+	_, err = db.Exec(query)
+	if err != nil {
+		logger.Error(err)
+		return err
+	}
+
+	return nil
+}
+
 func SavePathogen(message string) {
-	log.Printf("Source message: %s", message)
 	var (
 		rexBlock    = regexp.MustCompile(`🦠 \[([^)]+)] подверг заражению патогеном «([^)]+)»`)
 		rexAuthor   = regexp.MustCompile(`\[([^)]+)]`)
@@ -209,7 +253,7 @@ func SavePathogen(message string) {
 
 	var ex, _ = os.Executable()
 	var exPath = filepath.Dir(ex)
-	var config DBConfig
+	var config models.DBConfig
 
 	var f = exPath + "/configs/mysql_conn.json"
 	fData, err := ioutil.ReadFile(f)
@@ -270,6 +314,33 @@ func incomingHandle(c net.Conn, die chan bool) {
 	json.Unmarshal(buf[0:nr], &data)
 	switch data.Method {
 	case "spawn":
+		// --- th2empty ---
+		key := fmt.Sprintf("id%d", data.UID)
+		settings[key] = models.Settings{
+			UserID:       0,
+			AutoInfector: false,
+			AutoVaccine:  false,
+		}
+
+		s := settings[key]
+		err = s.LoadSettings(&logger, data.UID)
+		if err != nil {
+			logger.Errorf("failed to load settings for user @id%d ~ session cannot be started | error: %s", data.UID, err)
+			return
+		}
+
+		settings[key] = s
+
+		machine := controller.AnswerMachine{
+			UserId:  settings[key].UserID,
+			VK:      api.NewVK(data.Token),
+			Enabled: settings[key].AutoInfector,
+			Logger:  &logger,
+		}
+
+		answerMachine[key] = machine
+		// --- th2empty end ---
+
 		fmt.Println("------------------------SPAWNED------------------------")
 		fmt.Println(data)
 		if _, exist := users[data.UID]; !exist {
@@ -389,7 +460,7 @@ func troublesNotify(update update, token string, text string) {
 func GetForbiddenWords(uid int) (ForbiddenWords, error) {
 	var ex, _ = os.Executable()
 	var exPath = filepath.Dir(ex)
-	var config DBConfig
+	var config models.DBConfig
 
 	var f = exPath + "/configs/mysql_conn.json"
 	var fData, err = ioutil.ReadFile(f)
@@ -408,18 +479,32 @@ func GetForbiddenWords(uid int) (ForbiddenWords, error) {
 		logger.Error(err)
 	}
 
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+			logger.Error(err)
+		}
+	}(db)
 
 	rows, err := db.Query(fmt.Sprintf("select uid, words from forbidden_words where uid=%d", uid))
 	if err != nil {
 		logger.Error(err)
 	}
 
-	defer rows.Close()
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			logger.Error(err)
+		}
+	}(rows)
 
 	var words ForbiddenWords
 	for rows.Next() {
-		rows.Scan(&words.UID, &words.Words)
+		err := rows.Scan(&words.UID, &words.Words)
+		if err != nil {
+			logger.Error(err)
+			return ForbiddenWords{}, err
+		}
 	}
 
 	return words, nil
@@ -525,7 +610,16 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 				update.Text = strings.ToLower(update.Text)
 
 				// --- th2empty ---
-				err := controller.CommandHandler(&logger, token, update.Text, update.PeerID, int(update.ID), uid)
+				key := fmt.Sprintf("id%d", uid)
+				machine := answerMachine[key]
+				go func() {
+					err := machine.Go(update.Text, uint64(update.PeerID))
+					if err != nil {
+						logger.Errorf("@id%d %s", uid, err)
+					}
+				}()
+
+				err := controller.CommandHandler(&logger, token, &settings, update.Text, update.PeerID, int(update.ID), uid)
 				if err != nil {
 					logger.Error(err)
 				}

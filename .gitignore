@@ -1,3 +1,7 @@
 *.log
 .idea
 data
+database/users
+database/general.json
+database/db
+longpoll/lp

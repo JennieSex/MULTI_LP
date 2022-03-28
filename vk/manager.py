@@ -6,6 +6,7 @@ from lib.threading_utils import run_in_pool
 from vk.user_bot.service import (reload_queue, kill_queue, vk_lp_running,
                                  lp_failed)
 from vk.user_bot import dlp, service_commands, sets
+from database.billing_manager import vk_users, users_added, catchers
 from database.billing_manager import users_added, catchers
 from longpoll.lp import logger, send_to_lp
 from vk.user_bot.utils import ExcReload
@@ -25,7 +26,7 @@ class User:
 
     def __init__(self, uid):
         self.db = database.VkDB(uid)
-        self.vk = VkApi(self.db.access_token, self.db.settings_get().captcha, raise_excepts=True, )
+        self.vk = VkApi(self.db.access_token, raise_excepts=True)
 
 
 server: socket.socket
@@ -165,7 +166,7 @@ async def async_reloader() -> NoReturn:
 
 async def async_poll_starter() -> NoReturn:
     await users_added.wait()
-    global vk_users
+    #global vk_users
     while True:
         time_ = time.time()
         try:
