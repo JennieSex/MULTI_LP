@@ -35,7 +35,21 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 
 	if len(msgParts) < 2 {
 		if message.ReplyMessage.FromID < 0 {
-			logger.Infof("@id%d attempt to infect a group club%d", message.FromID, message.ReplyMessage.FromID)
+			logger.Infof("@id%d attempt to infect a group -> club%d. Trying to infect by link in text...",
+				message.FromID, message.ReplyMessage.FromID)
+			replyMessageIds := rexID.FindAllString(message.ReplyMessage.Text, -1)
+			for _, id := range replyMessageIds {
+				if id == fmt.Sprintf("id%d", message.FromID) {
+					continue
+				}
+
+				err := SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
+				if err != nil {
+					logger.Error(err)
+					return "", err
+				}
+			}
+
 			return "", errors.New("attempt to infect a group")
 		}
 
@@ -57,19 +71,18 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 		return "", nil
 	} else if strings.EqualFold(msgParts[1], "всех") {
 		linkNum = -1
+	} else if strings.EqualFold(msgParts[1], "стоп") {
+		infectEnabled = false
+		EditMsg(vk, "👻 Остановка остановлена", message.ID, message.PeerID)
+		return "", nil
 	} else {
-		if strings.EqualFold(msgParts[1], "стоп") {
-			infectEnabled = false
-			EditMsg(vk, "👻 Остановка остановлена", message.ID, message.PeerID)
-		} else {
-			linkNum, err = strconv.Atoi(msgParts[1])
+		linkNum, err = strconv.Atoi(msgParts[1])
+		if err != nil {
+			err = SendMessage(vk, message.PeerID,
+				fmt.Sprintf("Заразить %s", msgParts[1]), 0)
 			if err != nil {
-				err = SendMessage(vk, message.PeerID,
-					fmt.Sprintf("Заразить %s", msgParts[1]), 0)
-				if err != nil {
-					logger.Error(err)
-					return "", err
-				}
+				logger.Error(err)
+				return "", err
 			}
 		}
 	}

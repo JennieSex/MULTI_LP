@@ -73,6 +73,17 @@ func getTargetId(logger *logging.Logger, vk *api.VK, msg object.MessagesMessage)
 
 	if msg.ReplyMessage != nil {
 		if len(targetNum) == 0 {
+			if msg.ReplyMessage.FromID < 0 {
+				ids := rexTargetID.FindAllString(msg.ReplyMessage.Text, -1)
+
+				for _, id := range ids {
+					if id != fmt.Sprintf("id%d", msg.FromID) {
+						target = strings.Replace(id, "id", "", 1)
+						break
+					}
+				}
+			}
+
 			target = strconv.Itoa(msg.ReplyMessage.FromID)
 		} else {
 			var idx, _ = strconv.Atoi(targetNum)
@@ -121,9 +132,7 @@ func getTargetId(logger *logging.Logger, vk *api.VK, msg object.MessagesMessage)
 	return id, nil
 }
 
-// FindInfections
-// if you don't know target id, send -1
-func FindInfections(logger *logging.Logger, vk *api.VK, mid, ownerId, targetID int) string {
+func FindInfections(logger *logging.Logger, vk *api.VK, mid, ownerId, targetID int) string { // if you don't know target id, send -1
 	var (
 		answer       string
 		message, err = GetMessageByID(vk, mid)
