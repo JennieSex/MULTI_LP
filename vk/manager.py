@@ -6,9 +6,8 @@ from lib.threading_utils import run_in_pool
 from vk.user_bot.service import (reload_queue, kill_queue, vk_lp_running,
                                  lp_failed)
 from vk.user_bot import dlp, service_commands, sets
-from database.billing_manager import vk_users, users_added, catchers
-from database.client import method
-from longpoll.lp import logger, send_to_lp, _lp_ports
+from database.billing_manager import users_added, catchers
+from longpoll.lp import logger, send_to_lp
 from vk.user_bot.utils import ExcReload
 from vk.running_on_tasks import rot
 import socket
@@ -26,7 +25,7 @@ class User:
 
     def __init__(self, uid):
         self.db = database.VkDB(uid)
-        self.vk = VkApi(self.db.access_token, raise_excepts=True)
+        self.vk = VkApi(self.db.access_token, self.db.settings_get().captcha, raise_excepts=True, )
 
 
 server: socket.socket
@@ -93,11 +92,9 @@ def handle_signal(data: bytes):
         if type(data['type']) != str:
             user = vk_lp_running[data['uid']]
             if data['type'] in {111, 222, 333, 444, 555}:
-                run_in_pool(catch_n_handle,
-                            commands[data['type']], mkupdate(data), data, user)
+                run_in_pool(catch_n_handle, commands[data['type']], mkupdate(data), data, user)
             else:
-                run_in_pool(catch_n_handle,
-                            dlp.launch, mkupdate(data), data, user)
+                run_in_pool(catch_n_handle, dlp.launch, mkupdate(data), data, user)
         else:
             del(vk_lp_running[data['uid']])
             if data['type'] == 'dying':
