@@ -1,0 +1,16 @@
+.fsex {
+    font-size: large;
+}
+
+.caveat {
+    font-family: 'Caveat', cursive;
+}
+
+@font-face {
+    font-family: 'fsex';
+    src: url('/styles/fonts/fsex.woff2') format('woff2'),
+         url('/styles/fonts/fsex.woff') format('woff'),
+         url('/styles/fonts/fsex.ttf') format('ttf');
+    font-weight: normal;
+    font-style: normal;
+}

@@ -1,0 +1,22 @@
+.trans {
+    transition: all 1s ease-in-out;
+}
+
+.navbar-menu-opened {
+    background-color: var(--navbar-menu-opened);
+}
+
+.pagecontent {
+    min-height: calc(100vh - 70px);
+}
+
+.hdn {
+    transform: translateY(-100%);
+    transition: 1s !important;
+    max-height: 0;
+}
+
+
+/* .shw {
+
+} */

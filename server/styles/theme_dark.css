@@ -1,0 +1,28 @@
+:root {
+    --navbar-menu-opened: #19420c;
+}
+
+html,
+.themebg {
+    background-color: #1e1e1e !important;
+    transition: all 1s ease-in-out;
+}
+
+.header {
+    background-color: #151515 !important;
+    transition: all 1s ease-in-out;
+}
+
+.headertext {
+    color: #f80a0a !important;
+    transition: all 1s ease-in-out;
+}
+
+.themedtext {
+    color: #cdd4d4 !important;
+    transition: all 1s ease-in-out;
+}
+
+.button {
+    background-color: #f80a0a;
+}
