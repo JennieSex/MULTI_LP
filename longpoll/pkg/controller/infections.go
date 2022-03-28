@@ -82,6 +82,8 @@ func getTargetId(logger *logging.Logger, vk *api.VK, msg object.MessagesMessage)
 						break
 					}
 				}
+			} else {
+				target = strconv.Itoa(msg.ReplyMessage.FromID)
 			}
 		} else {
 			var idx, _ = strconv.Atoi(targetNum)
