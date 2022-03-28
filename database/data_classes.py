@@ -23,6 +23,7 @@ class Settings(_dataclass):
     dogs_del: bool
     ignore_list: List[str]
     del_requests: bool
+    captcha: bool
     online: bool
     offline: bool
     templates_bind: int
@@ -41,20 +42,5 @@ class Account(_dataclass):
     vk_longpoll: bool
 
 
-class SettingsTG(_dataclass):
-    nickname: str
-    prefix: str
-    deleter: str
-    _deleter_edit: str
-    editor: str
-
-
-class AccountTG(_dataclass):
-    on: bool
-    vk_bind: int
-
-
 Settings._find_annotated_vars()
 Account._find_annotated_vars()
-SettingsTG._find_annotated_vars()
-AccountTG._find_annotated_vars()
