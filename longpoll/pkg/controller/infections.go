@@ -83,8 +83,6 @@ func getTargetId(logger *logging.Logger, vk *api.VK, msg object.MessagesMessage)
 					}
 				}
 			}
-
-			target = strconv.Itoa(msg.ReplyMessage.FromID)
 		} else {
 			var idx, _ = strconv.Atoi(targetNum)
 			var targets = rexTargetID.FindAllString(msg.ReplyMessage.Text, -1)
