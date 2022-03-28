@@ -1,27 +1,21 @@
-from .data_classes import Settings, Account, SettingsTG, AccountTG
-from lib.wtflog import get_boy_for_warden
-from typing import List
-import shutil
-import socket
 import json
-import time
-import sys
 import os
+import shutil
+from typing import List
+
+from lib.wtflog import get_boy_for_warden
+from .data_classes import Settings, Account
 
 logger = get_boy_for_warden('DB', 'Клиент базы данных')
 
 
-# да, я знаю, что так делать нельзя... но похуй))0)
-class _tg:
-    @staticmethod
-    def start():
-        return []
-
 root_path = os.path.join(os.path.dirname(__file__), "users")
+
 
 def read(user_id, filename):
     with open(os.path.join(root_path, f"{user_id}/{filename}.json"), "r", encoding="utf-8") as file:
-        	return json.loads(file.read())
+        return json.loads(file.read())
+
 
 def write(user_id, filename, data):
     path = os.path.join(root_path, f"{user_id}/{filename}.json")
@@ -33,17 +27,18 @@ def write(user_id, filename, data):
     with open(path, "w", encoding="utf-8") as file:
         try:
             file.write(
-            	json.dumps(data, ensure_ascii=False, indent=4)
+                json.dumps(data, ensure_ascii=False, indent=4)
             )
         except Exception as e:
             file.write(backup_data)
             raise e
 
+
 def get_typ(type_):
     return "templates" if type_ == "common" else "voices" if type_ == "voice" else "dutys"
 
+
 class method:
-    tg = _tg
 
     @staticmethod
     def start() -> List[int]:
@@ -53,18 +48,6 @@ class method:
                 continue
             users.append(int(dir))
         return users
-
-    @staticmethod
-    def die() -> None:
-        return
-        return _make_request('die')
-
-    @staticmethod
-    def ping() -> float:
-        return "временно пасасать"
-        ct = time.time()
-        _make_request('ping')
-        return round((time.time() - ct) * 1000, 1)
 
     @staticmethod
     def is_user(uid: int) -> bool:
@@ -78,52 +61,53 @@ class method:
     @staticmethod
     def add_user(uid: int):
         os.mkdir(os.path.join(
-        	root_path, str(uid)
+            root_path, str(uid)
         ))
         write(uid, "user", {
-          "catcher": 2,
-          "user_id": uid,
-        	"added_by": 0,
-          "vk_longpoll": False,
-          "prefix": ".л ",
-          "farm": {
-          	"on": False,
-          	"soft": False,
-          	"last_time": 0
-          },
-          "friends_add": False,
-          "dogs_del": False,
-          "ignore_list": [],
-          "del_requests": False,
-          "online": False,
-          "offline": False,
-          "templates_bind": 0,
-          "trusted_users": [],
-          "delete": {
-          	"deleter": "дд",
-          	"editor": "&#8300;",
-          	"editcmd": True,
-          	"old_type": True
-          },
-          "mentions": {
-          	"all": False,
-          	"mine": False
-          },
-          "leave_chats": False,
-          "autostatus_on": False,
-          "autostatus_format": "",
-          "repeater": {
-          	"on": False,
-          	"prefix": ".."
-          }
+            "catcher": 2,
+            "user_id": uid,
+            "added_by": 0,
+            "vk_longpoll": False,
+            "prefix": ".л ",
+            "farm": {
+                "on": False,
+                "soft": False,
+                "last_time": 0
+            },
+            "friends_add": False,
+            "dogs_del": False,
+            "ignore_list": [],
+            "del_requests": False,
+            "captcha": False,
+            "online": False,
+            "offline": False,
+            "templates_bind": 0,
+            "trusted_users": [],
+            "delete": {
+                "deleter": "дд",
+                "editor": "&#8300;",
+                "editcmd": True,
+                "old_type": True
+            },
+            "mentions": {
+                "all": False,
+                "mine": False
+            },
+            "leave_chats": False,
+            "autostatus_on": False,
+            "autostatus_format": "",
+            "repeater": {
+                "on": False,
+                "prefix": ".."
+            }
         })
         write(uid, "templates", [])
         write(uid, "voices", [])
         write(uid, "dutys", [])
         write(uid, "token", {
-        	"access_token": "",
-        	"me_token": "",
-        	"online_token": ""
+            "access_token": "",
+            "me_token": "",
+            "online_token": ""
         })
 
     @staticmethod
@@ -156,11 +140,6 @@ class method:
     @staticmethod
     def get_templates(uid: int, type_: str) -> dict:
         return read(uid, get_typ(type_))
-
-    @staticmethod
-    def get_all_templates_length() -> dict:
-        return 666
-        return _make_request('info', 'templates')
 
     @staticmethod
     def set_template(uid: int, type_: str, data: dict) -> dict:
@@ -204,10 +183,6 @@ class method:
         for uid in method.start():
             accounts.append(method.get_account(uid))
         return accounts
-
-    @staticmethod
-    def billing_get_balance(uid: int) -> float:
-        return "нихуя"
 
 
 def _search_updates(instance) -> dict:
