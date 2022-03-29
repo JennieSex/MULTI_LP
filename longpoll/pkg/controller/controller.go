@@ -5,7 +5,6 @@ package controller
 
 import (
 	"errors"
-	"fmt"
 	"github.com/SevereCloud/vksdk/v2/api"
 	"lp/pkg/logging"
 	"lp/pkg/models"
@@ -14,16 +13,27 @@ import (
 	"lp/pkg/utils"
 )
 
-// CommandHandler
+type CommandHandler struct {
+	Logger     *logging.Logger
+	OwnerId    int
+	Prefix     string
+	VK         *api.VK
+	AnsMachine *models.AnsweringMachine
+	Settings   *map[string]models.Settings
+}
+
+// IdentifyAndExec
 // monitors for new messages and executes a command if identified.
 // Returns error
-func CommandHandler(logger *logging.Logger, token string, s *map[string]models.Settings, message string, pid int, mid int, ownerId int) error {
-	var (
-		_key      = fmt.Sprintf("id%d", ownerId)
-		_settings = *s
-		_         = _settings[_key]
+func (h *CommandHandler) IdentifyAndExec(message string, pid int, mid int) error {
 
-		vk           = api.NewVK(token)
+	message = strings.Replace(message, h.Prefix, "", 1)
+	var (
+		//_key = fmt.Sprintf("id%d", h.OwnerId)
+		//_settings    = *h.Settings
+		//settings     = _settings[_key]
+		//_machine     = *h.AnsMachine
+		//machine      = _machine[_key]
 		messageParts = strings.Split(message, " ")
 		answer       string
 	)
@@ -34,20 +44,44 @@ func CommandHandler(logger *logging.Logger, token string, s *map[string]models.S
 
 	switch true {
 	case utils.HasString(messageParts[0], GetLabAliases):
-		answer = GetLab(token, logger)
+		answer = GetLab(h.VK, h.Logger)
 	case utils.HasString(messageParts[0], FindPathogenAliases):
-		answer = FindAuthorOfPathogen(logger, vk, mid, ownerId)
+		answer = FindAuthorOfPathogen(h.Logger, h.VK, mid, h.OwnerId)
 	case utils.HasString(messageParts[0], FinInfectionsAliases):
-		answer = FindInfections(logger, vk, mid, ownerId, -1)
+		answer = FindInfections(h.Logger, h.VK, mid, h.OwnerId, -1)
 	case utils.HasString(messageParts[0], InfectAliases):
-		go InfectUsers(vk, mid, logger)
+		go InfectUsers(h.VK, mid, h.Logger)
+	case utils.HasString(messageParts[0], EnableAnsweringMachine):
+		answer = h.updateAnsweringMachineSettings(true)
+	case utils.HasString(messageParts[0], DisableAnsweringMachine):
+		answer = h.updateAnsweringMachineSettings(false)
 	default:
 		return nil
 	}
 
 	if len(answer) != 0 {
-		EditMsg(vk, answer, mid, pid)
+		EditMsg(h.VK, answer, mid, pid)
 	}
 
 	return nil
+}
+
+func (h *CommandHandler) updateAnsweringMachineSettings(b bool) string {
+	var err error
+	if b {
+		err = h.AnsMachine.Enable()
+	} else {
+		err = h.AnsMachine.Disable()
+	}
+
+	if err != nil {
+		h.Logger.Error(err)
+		return "🕯 Не удалось обновить настройки"
+	} else {
+		if b {
+			return "🤖 Автоответчик активирован... Бойтесь хейтеры"
+		} else {
+			return "🤖 Автоответчик деактивирован..."
+		}
+	}
 }

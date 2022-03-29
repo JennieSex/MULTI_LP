@@ -16,10 +16,8 @@ import (
 	"github.com/SevereCloud/vksdk/v2/api"
 )
 
-func ParseLab(token string, peerId int) (models.Laboratory, error) {
-	vk := api.NewVK(token)
-
-	messagesHistory, err := GetMessagesHistory(token, peerId)
+func ParseLab(vk *api.VK, peerId int) (models.Laboratory, error) {
+	messagesHistory, err := GetMessagesHistory(vk, peerId)
 	if err != nil {
 		return models.Laboratory{}, err
 	}
@@ -103,9 +101,7 @@ func deleteMessages(vk *api.VK, msg int, logger *logging.Logger) error {
 	return nil
 }
 
-func GetLab(token string, logger *logging.Logger) string {
-	vk := api.NewVK(token)
-
+func GetLab(vk *api.VK, logger *logging.Logger) string {
 	msg, err := vk.MessagesSend(api.Params{
 		"user_id":   "-174105461",
 		"random_id": 0,
@@ -122,7 +118,7 @@ func GetLab(token string, logger *logging.Logger) string {
 	for i := 0; i < 21; i++ {
 		time.Sleep(time.Second * 1)
 		if len(res.Pathogens) == 0 || strings.Contains(res.Pathogens, "NULL") {
-			res, err = ParseLab(token, -174105461)
+			res, err = ParseLab(vk, -174105461)
 			if err != nil {
 				continue
 			}
@@ -154,6 +150,6 @@ func GetLab(token string, logger *logging.Logger) string {
 	if err != nil {
 		logger.Error(err)
 	}
-	
+
 	return info
 }

@@ -1,3 +1,6 @@
+// Developer: th2empty
+// Date: 29.03.2022
+
 package models
 
 import (

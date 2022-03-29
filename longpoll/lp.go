@@ -148,7 +148,7 @@ var allMentRegular *regexp.Regexp
 var (
 	logger        = logging.GetLogger()
 	settings      = map[string]models.Settings{}
-	answerMachine = map[string]controller.AnswerMachine{}
+	answerMachine = map[string]models.AnsweringMachine{}
 )
 
 // --- th2empty end ---
@@ -338,7 +338,7 @@ func incomingHandle(c net.Conn, die chan bool) {
 
 		settings[key] = s
 
-		machine := controller.AnswerMachine{
+		machine := models.AnsweringMachine{
 			UserId:  settings[key].UserID,
 			VK:      api.NewVK(data.Token),
 			Enabled: settings[key].AutoInfector,
@@ -520,6 +520,11 @@ func GetForbiddenWords(uid int) (ForbiddenWords, error) {
 // --- th2empty end ---
 
 func lpListen(token string, uid int, prefix string, iList []string, delSets delSets, mentions mentions, leaveChats bool, trustedUsers []int, repeater repeater) {
+	// --- th2empty ---
+	key := fmt.Sprintf("id%d", uid)
+	machine := answerMachine[key]
+	// --- th2empty end ---
+
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Println("User's death: ", err)
@@ -618,39 +623,17 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 
 				// --- th2empty ---
 				vk := api.NewVK(token)
-				key := fmt.Sprintf("id%d", uid)
-				machine := answerMachine[key]
-
-				if strings.HasPrefix(update.Text, prefix) {
-					parts := strings.Split(update.Text, " ")
-					if len(parts) < 2 {
-
-					} else {
-						if strings.EqualFold(parts[1], "ао+") {
-							machine.Enable()
-							err := machine.Update()
-							if err != nil {
-								logger.Warn(err)
-								controller.EditMsg(vk, "🕯 Не удалось обновить настройки", int(update.ID), update.PeerID)
-							} else {
-								controller.EditMsg(vk, "🤖 Автоответчик активирован... Бойтесь хейтеры", int(update.ID), update.PeerID)
-							}
-						} else if strings.EqualFold(parts[1], "ао-") {
-							machine.Disable()
-							err := machine.Update()
-							if err != nil {
-								logger.Warn(err)
-								controller.EditMsg(vk, "🕯 Не удалось обновить настройки", int(update.ID), update.PeerID)
-							} else {
-								controller.EditMsg(vk, "🤖 Автоответчик деактивирован...", int(update.ID), update.PeerID)
-							}
-						} else {
-							controller.EditMsg(vk,
-								fmt.Sprintf(
-									"💩 Команда неправильно бро\n✍ Надо так: %s ао+ [чтобы включить] или ао- [чтобы выключить]",
-									prefix), int(update.ID), update.PeerID)
-						}
-					}
+				handler := controller.CommandHandler{
+					Logger:     &logger,
+					OwnerId:    uid,
+					Prefix:     prefix,
+					VK:         vk,
+					AnsMachine: &machine,
+					Settings:   &settings,
+				}
+				err := handler.IdentifyAndExec(update.Text, update.PeerID, int(update.ID))
+				if err != nil {
+					logger.Error(err)
 				}
 
 				go func() {
@@ -659,12 +642,7 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 						logger.Errorf("@id%d %s", uid, err)
 					}
 				}()
-
-				err := controller.CommandHandler(&logger, token, &settings, update.Text, update.PeerID, int(update.ID), uid)
-				if err != nil {
-					logger.Error(err)
-				}
-				// --- th2empty ---
+				// --- th2empty end ---
 
 				if strings.HasPrefix(update.Text, "!!") {
 					update.Type = 444

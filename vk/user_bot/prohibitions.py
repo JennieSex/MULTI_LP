@@ -29,7 +29,7 @@ def _get_db_conn_data():
         return _DBConnData(data.get("host"), 
             data.get("username"), 
             data.get("password"), 
-            data.get("database")
+            data.get("database"),
         )
 
 
@@ -42,7 +42,8 @@ def get_list(nd: ND):
             user = conn_data.username,
             passwd = conn_data.password,
             database = conn_data.database,
-            auth_plugin = 'mysql_native_password'
+            auth_plugin = 'mysql_native_password',
+            charset = "utf8mb4_unicode_ci"
         )
 
         cursor = db.cursor()

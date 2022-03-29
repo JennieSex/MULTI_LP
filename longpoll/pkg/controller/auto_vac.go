@@ -1,3 +1,6 @@
+// Developer: th2empty
+// Date: 29.03.2022
+
 package controller
 
 import (
@@ -15,24 +18,24 @@ import (
 	"time"
 )
 
-type AnswerMachine struct {
+type AutoVaccine struct {
 	UserId  int
 	VK      *api.VK
 	Enabled bool
 	Logger  *logging.Logger
 }
 
-func (m *AnswerMachine) Enable() {
+func (m *AutoVaccine) Enable() {
 	m.Enabled = true
 	return
 }
 
-func (m *AnswerMachine) Disable() {
+func (m *AutoVaccine) Disable() {
 	m.Enabled = false
 	return
 }
 
-func (m *AnswerMachine) Update() error {
+func (m *AutoVaccine) Update() error {
 	var ex, _ = os.Executable()
 	var exPath = filepath.Dir(ex)
 	var config DBConfig
@@ -56,7 +59,7 @@ func (m *AnswerMachine) Update() error {
 
 	defer db.Close()
 
-	query := fmt.Sprintf(`UPDATE settings SET answering_machine = %t WHERE uid = %d`,
+	query := fmt.Sprintf(`UPDATE settings SET auto_vac = %t WHERE uid = %d`,
 		m.Enabled, m.UserId)
 
 	_, err = db.Exec(query)
@@ -70,15 +73,13 @@ func (m *AnswerMachine) Update() error {
 
 // Go
 // @param message - message text from event @NewMessage
-func (m *AnswerMachine) Go(message string, pid uint64) error {
+func (m *AutoVaccine) Go(message string, pid uint64) error {
 	if !m.Enabled {
 		return nil
 	}
 
 	var (
-		rexTrigger  = regexp.MustCompile("Служба безопасности лаборатории")
-		rexNumberId = regexp.MustCompile("id[0-9]+")
-		allIds      = rexNumberId.FindAllString(message, -1)
+		rexTrigger = regexp.MustCompile("Служба безопасности лаборатории")
 	)
 
 	if len(rexTrigger.FindString(message)) == 0 {
@@ -89,26 +90,11 @@ func (m *AnswerMachine) Go(message string, pid uint64) error {
 		return nil
 	}
 
-	var valiantId string
-	var err error
-	for _, id := range allIds {
-		if !(strings.Contains(id, fmt.Sprintf("%d", m.UserId))) {
-			valiantId = rexNumberId.FindString(id)
-			break
-		}
-	}
-
-	var commands = []string{"!купить вакцину",
-		fmt.Sprintf("Заразить [%s|ничтожество]\nЗнай свое место...", valiantId)}
 	time.Sleep(5 * time.Second)
 
-	for _, command := range commands {
-		_, err = m.VK.MessagesSend(api.Params{"random_id": 0, "peer_id": pid, "message": command})
-		if err != nil {
-			m.Logger.Error(err)
-		}
-
-		time.Sleep(10 * time.Second)
+	_, err := m.VK.MessagesSend(api.Params{"random_id": 0, "peer_id": pid, "message": "!купить вакцину"})
+	if err != nil {
+		m.Logger.Error(err)
 	}
 
 	return err

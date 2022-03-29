@@ -30,9 +30,7 @@ func GetMessageByID(vk *api.VK, id int) (object.MessagesMessage, error) {
 	return res.Items[len(res.Items)-1], nil
 }
 
-func GetMessagesHistory(token string, pid int) ([]object.MessagesMessage, error) {
-	vk := api.NewVK(token)
-
+func GetMessagesHistory(vk *api.VK, pid int) ([]object.MessagesMessage, error) {
 	var messages, err = vk.MessagesGetHistory(api.Params{
 		"count":   100,
 		"peer_id": pid,
