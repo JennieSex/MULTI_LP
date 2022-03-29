@@ -1,16 +1,13 @@
 # developer: th2empty
 # date 15.03.2022
 
-from vk.user_bot import dlp, ND
-from vk.user_bot.utils import exe, find_mention_by_message, ExcReload
-from vk.api_utils import execute_find_chat
-from database import owner_id
-from lib.microvk import VkApi
-
-import mysql.connector as mysql
 import json
 import os
 import traceback
+
+import mysql.connector as mysql
+
+from vk.user_bot import dlp, ND
 
 
 class _DBConnData:
@@ -25,12 +22,12 @@ def _get_db_conn_data():
     current_dir = os.getcwd()
     with open('{0}/vk/user_bot/configs/mysql_conn.json'.format(current_dir), 'r') as cfg:
         data = json.load(cfg)
-        
-        return _DBConnData(data.get("host"), 
-            data.get("username"), 
-            data.get("password"), 
-            data.get("database"),
-        )
+
+        return _DBConnData(data.get("host"),
+                           data.get("username"),
+                           data.get("password"),
+                           data.get("database"),
+                           )
 
 
 @dlp.register('запреты', receive=True)
@@ -38,12 +35,12 @@ def get_list(nd: ND):
     try:
         conn_data = _get_db_conn_data()
         db = mysql.connect(
-            host = conn_data.host,
-            user = conn_data.username,
-            passwd = conn_data.password,
-            database = conn_data.database,
-            auth_plugin = 'mysql_native_password',
-            charset = "utf8mb4_unicode_ci"
+            host=conn_data.host,
+            user=conn_data.username,
+            passwd=conn_data.password,
+            database=conn_data.database,
+            auth_plugin='mysql_native_password',
+            # charset = "utf8mb4_unicode_ci"
         )
 
         cursor = db.cursor()
@@ -85,11 +82,11 @@ def add_word(nd: ND):
     try:
         conn_data = _get_db_conn_data()
         db = mysql.connect(
-            host = conn_data.host,
-            user = conn_data.username,
-            passwd = conn_data.password,
-            database = conn_data.database,
-            auth_plugin = 'mysql_native_password'
+            host=conn_data.host,
+            user=conn_data.username,
+            passwd=conn_data.password,
+            database=conn_data.database,
+            auth_plugin='mysql_native_password'
         )
 
         cursor = db.cursor()
@@ -112,7 +109,7 @@ def add_word(nd: ND):
 
         cursor.execute("update forbidden_words set words='{0}' where uid={1}".format(words, nd.db.user_id))
         db.commit()
-        
+
         nd.msg_op(2, "✅ '{0}' теперь запрещено!".format(word))
     except Exception as ex:
         print("ERROR:: {0}".format(traceback.format_exc()))
@@ -126,11 +123,11 @@ def del_word(nd: ND):
     try:
         conn_data = _get_db_conn_data()
         db = mysql.connect(
-            host = conn_data.host,
-            user = conn_data.username,
-            passwd = conn_data.password,
-            database = conn_data.database,
-            auth_plugin = 'mysql_native_password'
+            host=conn_data.host,
+            user=conn_data.username,
+            passwd=conn_data.password,
+            database=conn_data.database,
+            auth_plugin='mysql_native_password'
         )
 
         cursor = db.cursor()
