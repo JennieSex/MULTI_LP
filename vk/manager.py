@@ -98,7 +98,7 @@ def handle_signal(data: bytes):
                 run_in_pool(catch_n_handle, dlp.launch, mkupdate(data), data, user)
         else:
             # --- th2empty ---
-            if data['type'] == 'fatal':
+            if data['type'] == 'fatal' and data["uid"] == -1:
                 logger.error("FATAL :: shutting down LP...")
                 from database.client import method
                 method.die()
