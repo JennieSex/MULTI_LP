@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"lp/pkg/logging"
+	"lp/pkg/util"
 	"regexp"
 	"strings"
 	"time"
@@ -17,7 +18,7 @@ import (
 )
 
 func ParseLab(vk *api.VK, peerId int) (models.Laboratory, error) {
-	messagesHistory, err := GetMessagesHistory(vk, peerId)
+	messagesHistory, err := util.GetMessagesHistory(vk, peerId)
 	if err != nil {
 		return models.Laboratory{}, err
 	}
@@ -86,21 +87,6 @@ func ParseLab(vk *api.VK, peerId int) (models.Laboratory, error) {
 	}, nil
 }
 
-func deleteMessages(vk *api.VK, msg int, logger *logging.Logger) error {
-	for m := msg; m < m+1; m++ {
-		_, err := vk.MessagesDelete(api.Params{
-			"peer_id":    -174105461,
-			"message_id": m,
-		})
-		if err != nil {
-			logger.Error(err)
-			return err
-		}
-	}
-
-	return nil
-}
-
 func GetLab(vk *api.VK, logger *logging.Logger) string {
 	msg, err := vk.MessagesSend(api.Params{
 		"user_id":   "-174105461",
@@ -128,7 +114,7 @@ func GetLab(vk *api.VK, logger *logging.Logger) string {
 	}
 
 	if strings.Contains(res.Pathogens, "NULL") {
-		err = deleteMessages(vk, msg, logger)
+		err = util.DeleteMessages(vk, msg, 2, logger)
 		if err != nil {
 			logger.Error(err)
 		}
@@ -146,7 +132,7 @@ func GetLab(vk *api.VK, logger *logging.Logger) string {
 		info += "\n\n" + res.Health
 	}
 
-	err = deleteMessages(vk, msg, logger)
+	err = util.DeleteMessages(vk, msg, 2, logger)
 	if err != nil {
 		logger.Error(err)
 	}

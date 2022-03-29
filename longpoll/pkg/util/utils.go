@@ -1,7 +1,7 @@
 // Developer: th2empty
 // Date: 17.03.2022
 
-package utils
+package util
 
 import (
 	"strings"

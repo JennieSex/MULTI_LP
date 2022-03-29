@@ -1,10 +1,11 @@
 // Developer: th2empty
 // Date: 17.03.2022
 
-package controller
+package util
 
 import (
 	"errors"
+	"lp/pkg/logging"
 	"math/rand"
 	"strings"
 	"time"
@@ -92,4 +93,19 @@ func GetUserIdByShortname(vk *api.VK, shortname string) (int, error) {
 	}
 
 	return res[0].ID, nil
+}
+
+func DeleteMessages(vk *api.VK, msg, count int, logger *logging.Logger) error {
+	for m := msg; m < m+count; m++ {
+		_, err := vk.MessagesDelete(api.Params{
+			"peer_id":    -174105461,
+			"message_id": m,
+		})
+		if err != nil {
+			logger.Error(err)
+			return err
+		}
+	}
+
+	return nil
 }

@@ -10,7 +10,7 @@ import (
 	"lp/pkg/models"
 	"strings"
 
-	"lp/pkg/utils"
+	"lp/pkg/util"
 )
 
 type CommandHandler struct {
@@ -39,28 +39,28 @@ func (h *CommandHandler) IdentifyAndExec(message string, pid int, mid int) error
 	}
 
 	switch true {
-	case utils.HasString(messageParts[0], GetLabAliases):
+	case util.HasString(messageParts[0], GetLabAliases):
 		answer = GetLab(h.VK, h.Logger)
-	case utils.HasString(messageParts[0], FindPathogenAliases):
+	case util.HasString(messageParts[0], FindPathogenAliases):
 		answer = FindAuthorOfPathogen(h.Logger, h.VK, mid, h.OwnerId)
-	case utils.HasString(messageParts[0], FinInfectionsAliases):
+	case util.HasString(messageParts[0], FinInfectionsAliases):
 		answer = FindInfections(h.Logger, h.VK, mid, h.OwnerId, -1)
-	case utils.HasString(messageParts[0], InfectAliases):
+	case util.HasString(messageParts[0], InfectAliases):
 		go InfectUsers(h.VK, mid, h.Logger)
-	case utils.HasString(messageParts[0], EnableAnsweringMachine):
+	case util.HasString(messageParts[0], EnableAnsweringMachine):
 		answer = h.updateAnsweringMachineSettings(true)
-	case utils.HasString(messageParts[0], DisableAnsweringMachine):
+	case util.HasString(messageParts[0], DisableAnsweringMachine):
 		answer = h.updateAnsweringMachineSettings(false)
-	case utils.HasString(messageParts[0], EnableAutoVaccine):
+	case util.HasString(messageParts[0], EnableAutoVaccine):
 		answer = h.updateAutoVaccineSettings(true)
-	case utils.HasString(messageParts[0], DisableAutoVaccine):
+	case util.HasString(messageParts[0], DisableAutoVaccine):
 		answer = h.updateAutoVaccineSettings(false)
 	default:
 		return nil
 	}
 
 	if len(answer) != 0 {
-		EditMsg(h.VK, answer, mid, pid)
+		util.EditMsg(h.VK, answer, mid, pid)
 	}
 
 	return nil

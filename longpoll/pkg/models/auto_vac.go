@@ -11,6 +11,7 @@ import (
 	"github.com/SevereCloud/vksdk/v2/api"
 	"io/ioutil"
 	"lp/pkg/logging"
+	"lp/pkg/util"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -74,7 +75,7 @@ func (m *AutoVaccine) update() error {
 
 // Go
 // @param message - message text from event @NewMessage
-func (m *AutoVaccine) Go(message string, pid uint64) error {
+func (m *AutoVaccine) Go(message string) error {
 	if !m.Enabled {
 		return nil
 	}
@@ -93,7 +94,12 @@ func (m *AutoVaccine) Go(message string, pid uint64) error {
 
 	time.Sleep(5 * time.Second)
 
-	_, err := m.VK.MessagesSend(api.Params{"random_id": 0, "peer_id": pid, "message": "!купить вакцину"})
+	id, err := m.VK.MessagesSend(api.Params{"random_id": 0, "peer_id": -174105461, "message": "!купить вакцину"})
+	if err != nil {
+		m.Logger.Error(err)
+	}
+
+	err = util.DeleteMessages(m.VK, id, 2, m.Logger)
 	if err != nil {
 		m.Logger.Error(err)
 	}

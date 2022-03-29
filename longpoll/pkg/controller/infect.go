@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/SevereCloud/vksdk/v2/api"
 	"lp/pkg/logging"
+	"lp/pkg/util"
 	"regexp"
 	"strconv"
 	"strings"
@@ -21,7 +22,7 @@ var (
 // InfectUsers
 // infects a user or users by their id
 func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
-	var message, err = GetMessageByID(vk, mid)
+	var message, err = util.GetMessageByID(vk, mid)
 	if err != nil {
 		logger.Error(err)
 	}
@@ -43,7 +44,7 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 					continue
 				}
 
-				err := SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
+				err := util.SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
 				if err != nil {
 					logger.Error(err)
 					return "", err
@@ -55,13 +56,13 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 
 		if message.FromID == message.ReplyMessage.FromID {
 			logger.Infof("@id%d tried to infect himself", message.FromID)
-			EditMsg(vk,
+			util.EditMsg(vk,
 				"🔪 Нож видишь? Пока он в моей руке. Но ещё один такой рофл и будет он уже в тебе.",
 				mid, message.PeerID)
 			return "", nil
 		}
 
-		err := SendMessage(vk, message.PeerID,
+		err := util.SendMessage(vk, message.PeerID,
 			fmt.Sprintf("Заразить [id%d|бомжа]", message.ReplyMessage.FromID), message.ReplyMessage.ID)
 		if err != nil {
 			logger.Error(err)
@@ -73,12 +74,12 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 		linkNum = -1
 	} else if strings.EqualFold(msgParts[1], "стоп") {
 		infectEnabled = false
-		EditMsg(vk, "👻 Остановка остановлена", message.ID, message.PeerID)
+		util.EditMsg(vk, "👻 Остановка остановлена", message.ID, message.PeerID)
 		return "", nil
 	} else {
 		linkNum, err = strconv.Atoi(msgParts[1])
 		if err != nil {
-			err = SendMessage(vk, message.PeerID,
+			err = util.SendMessage(vk, message.PeerID,
 				fmt.Sprintf("Заразить %s", msgParts[1]), 0)
 			if err != nil {
 				logger.Error(err)
@@ -95,7 +96,7 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 
 	if linkNum == -1 {
 		infectEnabled = true
-		EditMsg(vk,
+		util.EditMsg(vk,
 			fmt.Sprintf("🔪 Режим мясорубка -> on\n👻 Хреначим всех подряд\n💩 Всего целей: %d", len(ids)),
 			mid, message.PeerID)
 		logger.Debug(ids)
@@ -109,11 +110,11 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 				continue
 			}
 
-			err := SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
+			err := util.SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
 			if err != nil {
 				logger.Warn(err)
 				time.Sleep(5 * time.Second)
-				err := SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
+				err := util.SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", id), message.ReplyMessage.ID)
 				if err != nil {
 					logger.Warn(err)
 					return "", err
@@ -122,7 +123,7 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 			time.Sleep(10 * time.Second)
 		}
 
-		err := SendMessage(vk, message.PeerID, "👻 Бомжи - всё.", 0)
+		err := util.SendMessage(vk, message.PeerID, "👻 Бомжи - всё.", 0)
 		if err != nil {
 			logger.Warn(err)
 			return "", err
@@ -130,7 +131,7 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 		return "", nil
 	} else {
 		if len(ids) < linkNum {
-			EditMsg(vk, "⚠ Где-то ты в жизни не туда свернул...", mid, message.PeerID)
+			util.EditMsg(vk, "⚠ Где-то ты в жизни не туда свернул...", mid, message.PeerID)
 			return "", errors.New("invalid ids")
 		}
 
@@ -138,7 +139,7 @@ func InfectUsers(vk *api.VK, mid int, logger *logging.Logger) (string, error) {
 			return "", nil
 		}
 
-		err := SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", ids[linkNum-1]), 0)
+		err := util.SendMessage(vk, message.PeerID, fmt.Sprintf("Заразить [%s|бомжа]", ids[linkNum-1]), 0)
 		if err != nil {
 			logger.Warn(err)
 			return "", err

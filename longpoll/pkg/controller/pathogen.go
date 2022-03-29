@@ -9,6 +9,7 @@ import (
 	"github.com/SevereCloud/vksdk/v2/api"
 	"io/ioutil"
 	"lp/pkg/logging"
+	"lp/pkg/util"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -35,7 +36,7 @@ func FindAuthorOfPathogen(logger *logging.Logger, vk *api.VK, mid, ownerId int) 
 	var rexPathogen = regexp.MustCompile(`«([^)]+)»`)
 
 	var pat string
-	message, err := GetMessageByID(vk, mid)
+	message, err := util.GetMessageByID(vk, mid)
 	if err != nil {
 		logger.Error(err)
 		return "❗ Произошла следующая ошибка: %s\", err.Error()"

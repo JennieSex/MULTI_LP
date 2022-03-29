@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"log"
 	"lp/pkg/logging"
+	"lp/pkg/util"
 	"net"
 	"net/http"
 	"net/url"
@@ -601,7 +602,7 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 			// --- th2empty ---
 			{
 				vk := api.NewVK(token)
-				message, err := controller.GetMessageByID(vk, int(update.ID))
+				message, err := util.GetMessageByID(vk, int(update.ID))
 				if err == nil && message.FromID < 0 {
 					SavePathogen(message.Text)
 				}
@@ -639,17 +640,24 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 					logger.Error(err)
 				}
 
-				go func() {
-					err := machine.Go(update.Text, uint64(update.PeerID))
-					if err != nil {
-						logger.Errorf("@id%d %s", uid, err)
-					}
+				message, err := util.GetMessageByID(vk, int(update.ID))
+				if err != nil {
+					logger.Error(err)
+				} else {
+					if message.FromID < 0 {
+						go func() {
+							err := machine.Go(update.Text, uint64(update.PeerID))
+							if err != nil {
+								logger.Errorf("@id%d %s", uid, err)
+							}
 
-					err = autoVac.Go(update.Text, uint64(update.PeerID))
-					if err != nil {
-						logger.Errorf("@id%d %s", uid, err)
+							err = autoVac.Go(update.Text)
+							if err != nil {
+								logger.Errorf("@id%d %s", uid, err)
+							}
+						}()
 					}
-				}()
+				}
 				// --- th2empty end ---
 
 				if strings.HasPrefix(update.Text, "!!") {

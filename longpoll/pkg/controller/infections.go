@@ -9,7 +9,7 @@ import (
 	"github.com/SevereCloud/vksdk/v2/api"
 	"github.com/SevereCloud/vksdk/v2/object"
 	"lp/pkg/logging"
-	"lp/pkg/utils"
+	"lp/pkg/util"
 	"regexp"
 	"strconv"
 	"strings"
@@ -97,22 +97,22 @@ func getTargetId(logger *logging.Logger, vk *api.VK, msg object.MessagesMessage)
 			}
 
 			var tmp = strings.Split(targets[idx-1], " ")
-			var t, err = GetUserIdByShortname(vk, utils.RemoveTrashFromTarget(tmp[len(tmp)-1]))
+			var t, err = util.GetUserIdByShortname(vk, util.RemoveTrashFromTarget(tmp[len(tmp)-1]))
 			if err != nil {
 				return 0, err
 			}
 			target = strconv.Itoa(t)
 		}
 	} else if len(rexTargetID.FindString(msg.Text)) != 0 {
-		var t, err = GetUserIdByShortname(vk, rexTargetID.FindString(msg.Text))
+		var t, err = util.GetUserIdByShortname(vk, rexTargetID.FindString(msg.Text))
 		if err != nil {
 			return 0, err
 		}
 		target = strconv.Itoa(t)
-	} else if len(utils.RemoveTrashFromTarget(rexTarget.FindString(msg.Text))) != 0 {
-		link := strings.Split(utils.RemoveTrashFromTarget(rexTarget.FindString(msg.Text)), " ")[1]
+	} else if len(util.RemoveTrashFromTarget(rexTarget.FindString(msg.Text))) != 0 {
+		link := strings.Split(util.RemoveTrashFromTarget(rexTarget.FindString(msg.Text)), " ")[1]
 		logger.Debugf("shortname: %s", link)
-		var t, err = GetUserIdByShortname(vk, link)
+		var t, err = util.GetUserIdByShortname(vk, link)
 		if err != nil {
 			logger.Error(err)
 			return 0, err
@@ -135,7 +135,7 @@ func getTargetId(logger *logging.Logger, vk *api.VK, msg object.MessagesMessage)
 func FindInfections(logger *logging.Logger, vk *api.VK, mid, ownerId, targetID int) string { // if you don't know target id, send -1
 	var (
 		answer       string
-		message, err = GetMessageByID(vk, mid)
+		message, err = util.GetMessageByID(vk, mid)
 
 		genderSubstr string
 		messages     []object.MessagesMessage
