@@ -19,6 +19,7 @@ type CommandHandler struct {
 	Prefix     string
 	VK         *api.VK
 	AnsMachine *models.AnsweringMachine
+	AutoVac    *models.AutoVaccine
 	Settings   *map[string]models.Settings
 }
 
@@ -29,11 +30,6 @@ func (h *CommandHandler) IdentifyAndExec(message string, pid int, mid int) error
 
 	message = strings.Replace(message, h.Prefix, "", 1)
 	var (
-		//_key = fmt.Sprintf("id%d", h.OwnerId)
-		//_settings    = *h.Settings
-		//settings     = _settings[_key]
-		//_machine     = *h.AnsMachine
-		//machine      = _machine[_key]
 		messageParts = strings.Split(message, " ")
 		answer       string
 	)
@@ -55,6 +51,10 @@ func (h *CommandHandler) IdentifyAndExec(message string, pid int, mid int) error
 		answer = h.updateAnsweringMachineSettings(true)
 	case utils.HasString(messageParts[0], DisableAnsweringMachine):
 		answer = h.updateAnsweringMachineSettings(false)
+	case utils.HasString(messageParts[0], EnableAutoVaccine):
+		answer = h.updateAutoVaccineSettings(true)
+	case utils.HasString(messageParts[0], DisableAutoVaccine):
+		answer = h.updateAutoVaccineSettings(false)
 	default:
 		return nil
 	}
@@ -83,5 +83,25 @@ func (h *CommandHandler) updateAnsweringMachineSettings(b bool) string {
 		} else {
 			return "🤖 Автоответчик деактивирован..."
 		}
+	}
+}
+
+func (h *CommandHandler) updateAutoVaccineSettings(b bool) string {
+	var err error
+	if b {
+		err = h.AutoVac.Enable()
+	} else {
+		err = h.AutoVac.Disable()
+	}
+
+	if err != nil {
+		h.Logger.Error(err)
+		return "🕯 Не удалось обновить настройки"
+	}
+
+	if b {
+		return "🤖 Автовакцина активирована"
+	} else {
+		return "🤖 Автовакцина деактивирована"
 	}
 }

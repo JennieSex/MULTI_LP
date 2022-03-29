@@ -1,7 +1,7 @@
 // Developer: th2empty
 // Date: 29.03.2022
 
-package controller
+package models
 
 import (
 	"database/sql"
@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -25,17 +26,17 @@ type AutoVaccine struct {
 	Logger  *logging.Logger
 }
 
-func (m *AutoVaccine) Enable() {
+func (m *AutoVaccine) Enable() error {
 	m.Enabled = true
-	return
+	return m.update()
 }
 
-func (m *AutoVaccine) Disable() {
+func (m *AutoVaccine) Disable() error {
 	m.Enabled = false
-	return
+	return m.update()
 }
 
-func (m *AutoVaccine) Update() error {
+func (m *AutoVaccine) update() error {
 	var ex, _ = os.Executable()
 	var exPath = filepath.Dir(ex)
 	var config DBConfig
@@ -79,14 +80,14 @@ func (m *AutoVaccine) Go(message string, pid uint64) error {
 	}
 
 	var (
-		rexTrigger = regexp.MustCompile("Служба безопасности лаборатории")
+		rexTrigger  = regexp.MustCompile("([^)]+) заражению ([^)]+)")
+		rexNumberId = regexp.MustCompile("id[0-9]+")
+		allIds      = rexNumberId.FindAllString(message, -1)
 	)
 
-	if len(rexTrigger.FindString(message)) == 0 {
-		return nil
-	}
-
-	if !strings.Contains(message, fmt.Sprintf("id%d", m.UserId)) {
+	if len(rexTrigger.FindString(message)) == 0 ||
+		!strings.Contains(message, fmt.Sprintf("id%d", m.UserId)) ||
+		!strings.Contains(allIds[1], strconv.Itoa(m.UserId)) {
 		return nil
 	}
 

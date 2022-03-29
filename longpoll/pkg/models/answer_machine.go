@@ -74,7 +74,6 @@ func (m *AnsweringMachine) update() error {
 // Go
 // @param message - message text from event @NewMessage
 func (m *AnsweringMachine) Go(message string, pid uint64) error {
-	m.Logger.Debugf("Answering machine enabled: %t", m.Enabled)
 	if !m.Enabled {
 		return nil
 	}

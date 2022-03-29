@@ -10,4 +10,6 @@ var (
 	InfectAliases           = []string{"еб", "хуяк"}             // infect one or more users
 	EnableAnsweringMachine  = []string{"+ао", "ао+", "ответка+"}
 	DisableAnsweringMachine = []string{"-ао", "ао-", "ответка-"}
+	EnableAutoVaccine       = []string{"автовак+", "вакцинируемся"}
+	DisableAutoVaccine      = []string{"автовак-", "невакцинируемся"}
 )

@@ -149,6 +149,7 @@ var (
 	logger        = logging.GetLogger()
 	settings      = map[string]models.Settings{}
 	answerMachine = map[string]models.AnsweringMachine{}
+	autoVaccine   = map[string]models.AutoVaccine{}
 )
 
 // --- th2empty end ---
@@ -523,6 +524,7 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 	// --- th2empty ---
 	key := fmt.Sprintf("id%d", uid)
 	machine := answerMachine[key]
+	autoVac := autoVaccine[key]
 	// --- th2empty end ---
 
 	defer func() {
@@ -629,6 +631,7 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 					Prefix:     prefix,
 					VK:         vk,
 					AnsMachine: &machine,
+					AutoVac:    &autoVac,
 					Settings:   &settings,
 				}
 				err := handler.IdentifyAndExec(update.Text, update.PeerID, int(update.ID))
@@ -638,6 +641,11 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 
 				go func() {
 					err := machine.Go(update.Text, uint64(update.PeerID))
+					if err != nil {
+						logger.Errorf("@id%d %s", uid, err)
+					}
+
+					err = autoVac.Go(update.Text, uint64(update.PeerID))
 					if err != nil {
 						logger.Errorf("@id%d %s", uid, err)
 					}
