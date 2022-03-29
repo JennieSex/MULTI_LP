@@ -1,9 +1,15 @@
 package controller
 
 import (
+	"database/sql"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/SevereCloud/vksdk/v2/api"
+	"io/ioutil"
 	"lp/pkg/logging"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -24,6 +30,42 @@ func (m *AnswerMachine) Enable() {
 func (m *AnswerMachine) Disable() {
 	m.Enabled = false
 	return
+}
+
+func (m *AnswerMachine) Update() error {
+	var ex, _ = os.Executable()
+	var exPath = filepath.Dir(ex)
+	var config DBConfig
+
+	var f = exPath + "/configs/mysql_conn.json"
+	var fData, err = ioutil.ReadFile(f)
+	if err != nil {
+		return errors.New("failed to read file 'mysql_conn.json', no such file")
+	}
+
+	err = json.Unmarshal(fData, &config)
+	if err != nil {
+		return err
+	}
+
+	connData := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s", config.Username, config.Password, config.Database)
+	db, err := sql.Open("mysql", connData)
+	if err != nil {
+		m.Logger.Error(err)
+	}
+
+	defer db.Close()
+
+	query := fmt.Sprintf(`UPDATE settings SET answering_machine = %t WHERE uid = %d`,
+		m.Enabled, m.UserId)
+
+	_, err = db.Exec(query)
+	if err != nil {
+		m.Logger.Error(err)
+		return err
+	}
+
+	return nil
 }
 
 // Go

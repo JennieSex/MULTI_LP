@@ -183,24 +183,28 @@ func makePreparations() error {
 	var f = exPath + "/configs/mysql_conn.json"
 	fData, err := ioutil.ReadFile(f)
 	if err != nil {
-		logger.Fatal(err) // fatal error, LP can't work
+		logger.Error(err) // fatal error, LP can't work
+		sendErr("fatal", -1)
 	}
 
 	err = json.Unmarshal(fData, &config)
 	if err != nil {
 		logger.Fatal("config file filled incorrectly") // fatal error, LP can't work
+		sendErr("fatal", -1)
 	}
 
 	connData := fmt.Sprintf("%s:%s@tcp(127.0.0.1:3306)/%s", config.Username, config.Password, config.Database)
 	db, err := sql.Open("mysql", connData)
 	if err != nil {
-		logger.Error(err) // critical error, but LP can work without some commands
+		logger.Error(err) // critical error, LP can't work
+		sendErr("fatal", -1)
 	}
 
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
 			logger.Error(err)
+			sendErr("fatal", -1)
 		}
 	}(db)
 
@@ -210,6 +214,7 @@ func makePreparations() error {
 	_, err = db.Exec(query)
 	if err != nil {
 		logger.Error(err)
+		sendErr("fatal", -1)
 		return err
 	}
 
@@ -271,12 +276,14 @@ func SavePathogen(message string) {
 	db, err := sql.Open("mysql", connData)
 	if err != nil {
 		logger.Error(err)
+		sendErr("fatal", -1)
 	}
 
 	defer func(db *sql.DB) {
 		err := db.Close()
 		if err != nil {
 			logger.Error(err)
+			sendErr("fatal", -1)
 		}
 	}(db)
 
@@ -610,8 +617,42 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 				update.Text = strings.ToLower(update.Text)
 
 				// --- th2empty ---
+				vk := api.NewVK(token)
 				key := fmt.Sprintf("id%d", uid)
 				machine := answerMachine[key]
+
+				if strings.HasPrefix(update.Text, prefix) {
+					parts := strings.Split(update.Text, " ")
+					if len(parts) < 2 {
+
+					} else {
+						if strings.EqualFold(parts[1], "ао+") {
+							machine.Enable()
+							err := machine.Update()
+							if err != nil {
+								logger.Warn(err)
+								controller.EditMsg(vk, "🕯 Не удалось обновить настройки", int(update.ID), update.PeerID)
+							} else {
+								controller.EditMsg(vk, "🤖 Автоответчик активирован... Бойтесь хейтеры", int(update.ID), update.PeerID)
+							}
+						} else if strings.EqualFold(parts[1], "ао-") {
+							machine.Disable()
+							err := machine.Update()
+							if err != nil {
+								logger.Warn(err)
+								controller.EditMsg(vk, "🕯 Не удалось обновить настройки", int(update.ID), update.PeerID)
+							} else {
+								controller.EditMsg(vk, "🤖 Автоответчик деактивирован...", int(update.ID), update.PeerID)
+							}
+						} else {
+							controller.EditMsg(vk,
+								fmt.Sprintf(
+									"💩 Команда неправильно бро\n✍ Надо так: %s ао+ [чтобы включить] или ао- [чтобы выключить]",
+									prefix), int(update.ID), update.PeerID)
+						}
+					}
+				}
+
 				go func() {
 					err := machine.Go(update.Text, uint64(update.PeerID))
 					if err != nil {
@@ -646,7 +687,7 @@ func lpListen(token string, uid int, prefix string, iList []string, delSets delS
 					if !send(uid, update) {
 						troublesNotify(update, token,
 							"⚠ Приемник сигналов работает в аварийном режиме "+
-								"(модмейкер где-то накосячил, напиши своему [id83759702|хозяину])")
+								"(кодер где-то накосячил, напиши своему [id83759702|хозяину] и сдай его с потрохами)")
 					}
 				}
 			} else {
