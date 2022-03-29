@@ -99,6 +99,8 @@ func (m *AutoVaccine) Go(message string) error {
 		m.Logger.Error(err)
 	}
 
+	time.Sleep(10 * time.Second)
+
 	err = util.DeleteMessages(m.VK, id, 2, m.Logger)
 	if err != nil {
 		m.Logger.Error(err)
