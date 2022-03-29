@@ -69,6 +69,9 @@ func (h *CommandHandler) IdentifyAndExec(message string, pid int, mid int) error
 func (h *CommandHandler) updateAnsweringMachineSettings(b bool) string {
 	var err error
 	if b {
+		if h.AutoVac.Enabled {
+			return "👿 Нельзя использовать автовакцину и автоответчик одновременно"
+		}
 		err = h.AnsMachine.Enable()
 	} else {
 		err = h.AnsMachine.Disable()
@@ -89,6 +92,9 @@ func (h *CommandHandler) updateAnsweringMachineSettings(b bool) string {
 func (h *CommandHandler) updateAutoVaccineSettings(b bool) string {
 	var err error
 	if b {
+		if h.AnsMachine.Enabled {
+			return "👿 Нельзя использовать автовакцину и автоответчик одновременно"
+		}
 		err = h.AutoVac.Enable()
 	} else {
 		err = h.AutoVac.Disable()
