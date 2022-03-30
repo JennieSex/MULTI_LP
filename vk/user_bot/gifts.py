@@ -61,7 +61,7 @@ def gifs(nd: ND):
         Информация о последнем подарке:
         -✪ Комментарии к подарку ✪: {last_gift['message'] if last_gift['message'] == 0 else 'отсутствует'}
         -✪ ID подарка ✪: {last_gift['id']} | {last_gift['gift']['id']}
-        -✪ Изоброжение подарка ✪: {last_gift['gift']['thumb_48']}
+        -✪ Изображение подарка ✪: {last_gift['gift']['thumb_48']}
         """.replace('    ', '')
 
         nd.msg_op(2, message, keep_forward_messages=1)
