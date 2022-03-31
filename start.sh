@@ -16,4 +16,4 @@ trap 'kill 0' EXIT
 ./longpoll/lp 56110 &
 ./longpoll/lp 56101 &
 
-cat | python3 Python4.py -lp1 56011 -lp2 56022 -lp3 56033 -lp4 56044 -lp5 56055 -lp6 56066 -lp7 56077 -lp8 56088 -lp9 56099 -lp10 56110
+cat | python3.8 Python4.py -lp1 56011 -lp2 56022 -lp3 56033 -lp4 56044 -lp5 56055 -lp6 56066 -lp7 56077 -lp8 56088 -lp9 56099 -lp10 56110

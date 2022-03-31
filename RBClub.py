@@ -3,16 +3,16 @@ version = "0.5.3 indev"
 import os, sys, subprocess
 from lib.wtflog import warden, create_warden
 
-subprocess.run("pm2 restart 41", shell=True)
-subprocess.run("pm2 restart 42", shell=True)
-subprocess.run("pm2 restart 43", shell=True)
-subprocess.run("pm2 restart 44", shell=True)
-subprocess.run("pm2 restart 45", shell=True)
-subprocess.run("pm2 restart 46", shell=True)
-subprocess.run("pm2 restart 47", shell=True)
-subprocess.run("pm2 restart 48", shell=True)
-subprocess.run("pm2 restart 49", shell=True)
-subprocess.run("pm2 restart 50", shell=True)
+subprocess.run("pm2 restart 1", shell=True)
+subprocess.run("pm2 restart 2", shell=True)
+subprocess.run("pm2 restart 3", shell=True)
+subprocess.run("pm2 restart 4", shell=True)
+subprocess.run("pm2 restart 5", shell=True)
+subprocess.run("pm2 restart 6", shell=True)
+subprocess.run("pm2 restart 7", shell=True)
+subprocess.run("pm2 restart 8", shell=True)
+subprocess.run("pm2 restart 9", shell=True)
+subprocess.run("pm2 restart 10", shell=True)
 
 # Создание логгера LongPoll
 create_warden('LP', 'logs/LP.log', level=warden.USELESS,
