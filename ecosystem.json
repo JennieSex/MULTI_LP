@@ -1,7 +1,7 @@
 {
     "apps": [
         {
-            "name": "RBClub LONGPOLL module 1",
+            "name": "Hibiki LONGPOLL module 1",
             "script": "./longpoll/lp",
             "args": "56011",
             "kill_timeout": 500,
@@ -9,7 +9,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub LONGPOLL module 2",
+            "name": "Hibiki LONGPOLL module 2",
             "script": "./longpoll/lp",
             "args": "56022",
             "kill_timeout": 500,
@@ -17,7 +17,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub LONGPOLL module 3",
+            "name": "Hibiki LONGPOLL module 3",
             "script": "./longpoll/lp",
             "args": "56033",
             "kill_timeout": 500,
@@ -25,7 +25,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub LONGPOLL module 6",
+            "name": "Hibiki LONGPOLL module 6",
             "script": "./longpoll/lp",
             "args": "56044",
             "kill_timeout": 500,
@@ -33,7 +33,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub LONGPOLL module 4",
+            "name": "Hibiki LONGPOLL module 4",
             "script": "./longpoll/lp",
             "args": "56055",
             "kill_timeout": 500,
@@ -41,7 +41,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub LONGPOLL module 5",
+            "name": "Hibiki LONGPOLL module 5",
             "script": "./longpoll/lp",
             "args": "56066",
             "kill_timeout": 500,
@@ -49,7 +49,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub LONGPOLL module 7",
+            "name": "Hibiki LONGPOLL module 7",
             "script": "./longpoll/lp",
             "args": "56077",
             "kill_timeout": 500,
@@ -57,7 +57,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub LONGPOLL module 8",
+            "name": "Hibiki LONGPOLL module 8",
             "script": "./longpoll/lp",
             "args": "56088",
             "kill_timeout": 500,
@@ -65,7 +65,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub LONGPOLL module 9",
+            "name": "Hibiki LONGPOLL module 9",
             "script": "./longpoll/lp",
             "args": "56099",
             "kill_timeout": 500,
@@ -73,7 +73,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub LONGPOLL module 10",
+            "name": "Hibiki LONGPOLL module 10",
             "script": "./longpoll/lp",
             "args": "56110",
             "kill_timeout": 500,
@@ -81,7 +81,7 @@
             "max_memory_restart": "50M"
         },
         {
-            "name": "RBClub MAIN module",
+            "name": "Hibiki MAIN module",
             "script": "./RBClub.py",
             "args": "-db 56101 -lp1 56011 -lp2 56022 -lp3 56033 -lp4 56044 -lp5 56055 -lp6 56066 -lp7 56077 -lp8 56088 -lp9 56099 -lp10 56110",
             "kill_timeout": 5000,

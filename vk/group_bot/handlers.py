@@ -12,7 +12,7 @@ from lib.vkmini import VkApi, VkResponseException
 from lib.vkmini.group_longpoll import Update
 
 pings_chat: List[List[Tuple[str, int]]] = [
-    [('ОГО, ОБОСРАТЬСЯ, ЕЩЕ ОДИН ПИНГ, ТЕПЕРЬ У НАС БЛЯДЬ ТРИ СУКА ПИНГА', 0), ('', 163)],
+    [('ОГО, ОБОСРАТЬСЯ, ЕЩЕ ОДИН ПИНГ, ТЕПЕРЬ У НАС БЛЯДЬ ТРИ СУКА ПИНГА', 0), ('', 163)], #TODO: Чё это, гляньте пжлст
     [('Hfyljvbpbhetv gbyu///', 0), ('Бля, раскладкой ошибся...', 0), ('', 17675)],
     [('', 11247)],
     [('', 12925)],
@@ -58,22 +58,22 @@ async def check_for_tokens(update: Update, group_id: int):  # noqa
     if token_:
         if is_me:
             if await edit_msg(api, update.object['message'],
-                              '🔧 Обнаружен токен VkMe'):
+                              'Мяу! Обнаружила токен VkME'):
                 metoken = token_
             else:
                 return await update.reply_to_peer(
-                    'Это не твой токен, либо отсутствует доступ к сообщениям'
+                    'Не мяу! Это не твой токен, либо отсутствует доступ к сообщениям'
                 )
         else:
             if await edit_msg(api, update.object['message'],
-                              '⚙️ Обнаружен токен НЕ VkMe'):
+                              '⚙️ Мяу! Обнаружен токен НЕ VkMe'):
                 token = token_
             else:
                 return await update.reply_to_peer(
-                    'Это не твой токен, либо отсутствует доступ к сообщениям'
+                    'Не мяу! Это не твой токен, либо отсутствует доступ к сообщениям'
                 )
         if not method.is_user(update.message.peer_id):
-            return await update.reply_to_peer('Ты кто вообще такой?')
+            return await update.reply_to_peer('Не мяу! Не нашла твоей базы данных.')
         try:
             method.update_token(update.message.peer_id,
                                 access_token=token, me_token=metoken)
@@ -91,11 +91,11 @@ async def check_for_tokens(update: Update, group_id: int):  # noqa
             except VkResponseException:
                 main = False
             if main:
-                msg = '👌🏻 Me токен сохранен'
+                msg = '👌🏻 Мяу! VkME токен сохранен'
             else:
-                msg = '🤔 Me токен сохранен, но основной токен неактуален'
+                msg = '🤔 Мяу? VkME токен сохранен, но основной токен неактуален'
         else:
-            msg = '✅ Запущено!'
+            msg = '✅ Мяу! Запустила тебе ботика!'
         reload_queue.append(update.message.peer_id)
         await update.reply_to_peer(msg)
 
@@ -137,7 +137,7 @@ async def switch_state(update: Update, on: bool):
     uid = update.message.from_id if update.message.peer_id > 2e9 else update.message.peer_id  # noqa
     if not method.is_user(uid):
         return await update.reply_to_peer(
-            'А ты, собсна, кто такой вообще?..'
+            'Не мяу! Не нашла твоей базы данных.'
         )
     acc = Account(method.get_account(uid))
     if on:
