@@ -42,7 +42,7 @@ print_info()
 
 
 from vk.manager import async_autohandler, async_poll_starter, async_reloader
-from database.billing_manager import async_users_filler
+from database.billing_manager import async_users_filler, tmp_cleaner
 from vk.user_bot.timers.timers import async_timers_checker
 from vk.user_bot.templates.life_is_strange import async_rewind_checker
 from vk.user_bot.fake_activity import async_fake_typer
@@ -62,6 +62,8 @@ aio_loop.create_task(async_timers_checker())
 aio_loop.create_task(async_fake_typer())
 
 aio_loop.create_task(group_bot_runner())
+
+aio_loop.create_task(tmp_cleaner())
 
 from database.client import method
 
