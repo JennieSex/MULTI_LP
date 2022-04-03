@@ -4,7 +4,6 @@ import textwrap
 from PIL import Image, ImageDraw
 
 from lib.microvk import VkApi
-from lib.vkmini import LP
 from lib.common_utils import parse_text
 from database import VkDB
 from time import sleep
@@ -47,7 +46,28 @@ def VoiceMessageUploader(token, peer_id, name):
     return f'doc{a["owner_id"]}_{a["id"]}'
 
 
-def parseByID(vk, msg_id, atts=[]):
+def DocMessageUploader(token, peer_id, name):
+    a = requests.post('https://api.vk.com/method/docs.getMessagesUploadServer',
+                      params={'access_token': token, 'v': 5.131, 'type': 'doc', 'peer_id': peer_id})
+    a = requests.post(json.loads(a.text)['response']['upload_url'], files={'file': open(name, 'rb')})
+    a = json.loads(a.text)
+    a = requests.post('https://api.vk.com/method/docs.save',
+                      params={'access_token': token, 'v': 5.131, 'file': a['file']})
+    a = json.loads(a.text)['response']['doc']
+    return f'doc{a["owner_id"]}_{a["id"]}'
+
+
+def PhotoMessageUploader(name, vk: VkApi):
+    upload_url = vk('photos.getMessagesUploadServer')['upload_url']
+    data = requests.post(upload_url, files={'photo': open(name, 'rb')}).json()
+    saved = vk('photos.saveMessagesPhoto', photo=data['photo'],
+               hash=data['hash'], server=data['server'])[0]
+    return f"photo{saved['owner_id']}_{saved['id']}"
+
+
+def parseByID(vk, msg_id, atts=None):
+    if atts is None:
+        atts = []
     msg = (vk('messages.getById', message_ids=msg_id)['items'][0])
     return parse(msg, atts)
 
@@ -143,7 +163,7 @@ def upload_audio(att, vk):
     uploaded = requests.post(upload_url, files={'file': audio_msg}).json()['file']
     audio = vk('docs.save', file=uploaded)['audio_message']
     length = round(MP3(audio_msg).info.length, 1)
-    del (audio_msg)
+    del audio_msg
     return f"audio_message{audio['owner_id']}_{audio['id']}_{audio['access_key']}", length
 
 
