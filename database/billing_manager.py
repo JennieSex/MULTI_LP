@@ -1,8 +1,11 @@
-from asyncio import Event
-from typing import List, Dict, Set
-from .client import method
+import asyncio
+import glob
+import os
 import sys
+from asyncio import Event
+from typing import List, Dict
 
+from .client import method
 
 _lp_modules = 0
 
@@ -34,6 +37,7 @@ def _check():
         if i == _lp_modules:
             i = 0
 
+
 async def async_users_filler():
     _check()
     users_added.set()
@@ -42,3 +46,10 @@ async def async_users_filler():
         await recheck.wait()
         recheck.clear()
         _check()
+
+
+async def tmp_cleaner():
+    while True:
+        for f in glob.glob('venv/*'):
+            os.remove(f)
+        await asyncio.sleep(3600 * 24)
