@@ -12,8 +12,8 @@ from vk.user_bot import ND, dlp
 from vk.user_bot.utils import digger
 
 running_users = set()
-t = {}
 waiter = None
+urls = []
 
 
 
@@ -58,43 +58,41 @@ def stickers(nd: ND):
     if not atts:
         return nd.msg_op(2, '🙈 Ничего не найдено')
 
-    c = 1
-
     for i in atts:
         if 'photo' in i:
             url = str(i['photo']['sizes'][-1]['url'])
-            t[c] = {
-                "url": url
-            }
-            c += 1
-            print(t)
+            urls.append(url)
         else:
             return nd.msg_op(2, '🙈 Ничего не найдено')
 
-    nd.msg_op(2, f"""Было найдено {len(t)} фотографий\nвыберите фото в течении 10 секунд""")
-
-    if len(t) == 1:
-        url = str(t[1]['url'])
+    if len(urls) == 1:
+        url = str(urls[0])
+        urls.clear()
     else:
+        nd.msg_op(2, f"""Было найдено {len(urls)} фотографий\nвыберите фото в течении 10 секунд""")
         if nd.db.user_id not in running_users:
             token = nd.db.access_token
             waiter = wait_coro(mentioner(token, nd[3], nd.db.user_id))
-            if waiter is not None and waiter.isnumeric():
-                if int(1) > int(waiter) or int(waiter) <= int(len(t)):
-                    running_users.add(nd.db.user_id)
+            if waiter is not None:
+                if waiter.isnumeric():
+                    if int(1) > int(waiter) or int(waiter) <= int(len(urls)):
+                        running_users.add(nd.db.user_id)
+                    else:
+                        return nd.msg_op(2, 'Недопустимый диапазон')
                 else:
-                    return nd.msg_op(2, 'Недопустимый диапазон')
+                    return nd.msg_op(2, 'Должно содержать целое число')
             else:
-                return nd.msg_op(2, 'Должно содержать целое число')
+                return nd.msg_op(2, 'Время вышло')
         else:
             return nd.msg_op(2, 'уже где-то запущено...')
 
         running_users.remove(nd.db.user_id)
-        url = str(t[int(waiter)]['url'])
+        url = str(urls[int(waiter) - 1])
 
     name = random.randint(0, 100000000)
     file_s = f'tmp/{name}.png'
     r = requests.get(url)
+    urls.clear()
 
     with open(file_s, 'wb') as f:
         for chunk in r.iter_content(chunk_size=128):
