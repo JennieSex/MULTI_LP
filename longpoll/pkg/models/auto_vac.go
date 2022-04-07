@@ -15,8 +15,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -81,14 +79,12 @@ func (m *AutoVaccine) Go(message string) error {
 	}
 
 	var (
-		rexTrigger  = regexp.MustCompile("([^)]+) заражению ([^)]+)")
-		rexNumberId = regexp.MustCompile("id[0-9]+")
-		allIds      = rexNumberId.FindAllString(message, -1)
+		rexTrigger = regexp.MustCompile("([^)]+) заражению ([^)]+)")
+		//rexNumberId = regexp.MustCompile("id[0-9]+")
+		//allIds      = rexNumberId.FindAllString(message, -1)
 	)
 
-	if len(rexTrigger.FindString(message)) == 0 ||
-		!strings.Contains(message, fmt.Sprintf("id%d", m.UserId)) ||
-		!strings.Contains(allIds[1], strconv.Itoa(m.UserId)) {
+	if len(rexTrigger.FindString(message)) == 0 {
 		return nil
 	}
 

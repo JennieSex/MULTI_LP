@@ -14,7 +14,6 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"strings"
 	"time"
 )
 
@@ -88,18 +87,18 @@ func (m *AnsweringMachine) Go(message string, pid uint64) error {
 		return nil
 	}
 
-	if !strings.Contains(message, fmt.Sprintf("id%d", m.UserId)) {
+	/*if !strings.Contains(message, fmt.Sprintf("id%d", m.UserId)) {
 		return nil
-	}
+	}*/
 
-	var valiantId string
+	var valiantId = allIds[1]
 	var err error
-	for _, id := range allIds {
+	/*for _, id := range allIds {
 		if !(strings.Contains(id, fmt.Sprintf("%d", m.UserId))) {
 			valiantId = rexNumberId.FindString(id)
 			break
 		}
-	}
+	}*/
 
 	var commands = []string{"!купить вакцину",
 		fmt.Sprintf("Заразить [%s|бомжа]\nЗнай свое место...", valiantId)}
